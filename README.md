@@ -1,14 +1,23 @@
 Uso de Git:
 
-- Crear un directorio donde guardar los archivos del proyecto.
+Crear un directorio donde guardar los archivos del proyecto.
 - git init
-- git branch dev
+Dependiendo quien este programando:
+	- git branch anto 
+	O sino:
+	- git branch mati
 - git branch --set-upstream=origin/main
+- git pull
+
+A partir de ahora, ya tienen el codigo en la carpeta y pueden modificarlo a gusto, una vez hechos los cambios que quieran, cuando esten listos para presentarlos en el repositorio hacen:
+- git add .
 - git commit
-- Añadir un comentario en el editor de texto emergente con los cambios que realizaron
+Luego añadir un comentario en el editor de texto emergente con una explicacion de los cambios que realizaron
 - git push origin HEAD
 
-
+Luego ingresar el usuario y el Token de accesso en los campos que se les pide.
+Pueden pegar el token de acceso en la consola con Ctrl + Shift + v
+Si se ejecuta todo bien, esta listo.
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
