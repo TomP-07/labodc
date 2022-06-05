@@ -15,7 +15,9 @@ A partir de ahora, ya tienen el codigo en la carpeta y pueden modificarlo a gust
 Luego añadir un comentario en el editor de texto emergente con una explicacion de los cambios que realizaron
 - git push origin HEAD
 
-Listo.
+Luego ingresar el usuario y el Token de accesso en los campos que se les pide.
+Pueden pegar el token de acceso en la consola con Ctrl + Shift + v
+Si se ejecuta todo bien, esta listo.
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
