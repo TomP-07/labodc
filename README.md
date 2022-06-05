@@ -1,3 +1,10 @@
+Uso de Git:
+
+- Crear un directorio donde guardar los archivos del proyecto.
+- git init
+- git branch --set-upstream=origin/dev development
+- git commit
+- git push
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
