@@ -2,8 +2,10 @@ Uso de Git:
 
 - Crear un directorio donde guardar los archivos del proyecto.
 - git init
-- git branch --set-upstream=origin/dev development
+- git branch dev
+- git branch --set-upstream=origin/main
 - git commit
+- Añadir un comentario en el editor de texto emergente con los cambios que realizaron
 - git push
 # Lab Org. y Arq. de Computadoras
 
