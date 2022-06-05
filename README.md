@@ -6,7 +6,9 @@ Uso de Git:
 - git branch --set-upstream=origin/main
 - git commit
 - Añadir un comentario en el editor de texto emergente con los cambios que realizaron
-- git push
+- git push origin HEAD
+
+
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
