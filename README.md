@@ -25,6 +25,10 @@ Luego añadir un comentario en el editor de texto emergente con una explicacion 
 Luego ingresar el usuario y el Token de accesso en los campos que se les pide.
 Pueden pegar el token de acceso en la consola con Ctrl + Shift + v
 Si se ejecuta todo bien, esta listo.
+
+Finalmente, cada vez que se siente a programar deben obtener la version mas reciente del codigo, para eso ejecutar:
+- git pull
+
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
