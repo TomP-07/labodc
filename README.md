@@ -4,16 +4,20 @@ Crear un directorio donde guardar los archivos del proyecto.
 - git init
 - git remote add origin https://github.com/TomP-07/labodc
 - git pull origin main
+
 Dependiendo quien este programando:
 	- git branch -m anto 
+	
 	O sino:
 	- git branch -m mati
+
 Luego:
 - git branch --set-upstream-to origin/main
 
 A partir de ahora, ya tienen el codigo en la carpeta y pueden modificarlo a gusto, una vez hechos los cambios que quieran, cuando esten listos para presentarlos en el repositorio hacen:
 - git add .
 - git commit
+
 Luego añadir un comentario en el editor de texto emergente con una explicacion de los cambios que realizaron
 - git push origin HEAD
 
