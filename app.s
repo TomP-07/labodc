@@ -1,4 +1,3 @@
-// cualquier cosa
 .equ SCREEN_WIDTH, 		640
 .equ SCREEN_HEIGH, 		480
 .equ BITS_PER_PIXEL,  	32
@@ -7,8 +6,6 @@
 main:
 	// X0 contiene la direccion base del framebuffer
 	mov x20, x0	// Save framebuffer base address to x20	
-
-
 
 /*	movz x10, 0xC7, lsl 16
 	movk x10, 0x1585, lsl 00
@@ -25,13 +22,17 @@ loop0:
 	cbnz x2,loop1	   // if not last row, jump
 
 */
+
 // --- This whole block is used exactly as it is for Stack Function Calls. Not pretty, but simple and useful enough. --- //
 adr x18, . // Read Program Counter at this instruction
 add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
-b Stack_Push_Caller																									//	||
+b Stack_Push_Caller
+
+
+
+
+																									//	||
 																													// Basically, this line.
-
-
 mov x0, SCREEN_WIDTH
 lsr x0, x0, 1
 lsl x0, x0, 32
@@ -48,10 +49,34 @@ mov x3, x20
 
 bl DrawCircle
 
+movz x0, 50, lsl 32
+movk x0, 50, lsl 00
+
+movz x1, 100
+
+movz x2, 0x99, lsl 32
+movk x2, 0x5555, lsl 00
+
+// x2 = 0x000000995555
+// Color = w2 = 0x00995555
+
+mov x3, x20
+
+bl DibujarCuadrado
+
+// Definimos un color.
+// Defino un altura. Digamos 100.
+
+DibujarRectangulo
+
+// Si el alto de la pantalla es de 480.
+
+// La autopista va a estar a partir de los 340
+
+
 adr x18, . // Read Program Counter at this instruction
 add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
 b Stack_Pop_Caller
-
 
 InfLoop: 
 	b InfLoop
@@ -60,6 +85,31 @@ InfLoop:
 
 // Draw File //
 
+// x0=(X|Y), x1 el ancho, x2 el color, x3 direccion del frame buffer
+DibujarCuadrado:
+
+
+    // 000...000 |    Ancho
+    mov x4, x1
+    lsl x1, x1, 32 // Ancho | 000...000
+    add x1, x1, x4 // Ancho | Ancho
+
+
+    mov x4, x3 // x4 = Frame buffer
+    mov x3, x2 // x3 = Color
+    adr x2, MapeadorCuadrado // Callback function of the iterator.
+    
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Push_Callee
+
+    bl SquareMapIterator
+    
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Pop_Callee
+
+    br lr
 
 // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
 DrawCircle: 
@@ -125,6 +175,25 @@ DrawCircle:
 DC_Exit: // Branch to Caller.
     br lr
 
+
+// x0=(X|Y), x1 el color, x2 direccion del frame buffer
+MapeadorCuadrado:
+    mov x4, xzr
+    mov w4, w0 // x4 = Y Position
+    lsr x3, x0, 32 // x3 = X Position
+    
+    // Time to PAINT :D
+
+    // So, the pixel address is: BUFFER[x][y] = BUFFER + 4 * (y * SCREEN_WIDTH + x)
+    mov x5, SCREEN_WIDTH
+    mul x5, x5, x4 // y * SCREEN_WIDTH
+    add x5, x5, x3 // (y * SCREEN_WIDTH + x)
+    lsl x5, x5, 2 // 4 * (y * SCREEN_WIDTH + x)
+    add x5, x5, x2 // BUFFER + 4 * (y * SCREEN_WIDTH + x)
+    stur w1, [x5] // Paint the pixel :D
+
+    br lr
+
 // x0=(X|Y), x1=(Center X | Center Y), x2=r, x3 = Color, x4 = FrameBuffer
 CircleMaper:
 
@@ -151,8 +220,6 @@ CircleMaper:
     cmp x9, x2 // FLAGS == (x - Xc)^2 + (y - Yc)^2 <= r^2
 
     b.GT CM_1
-    
-    // Time to PAINT :D
 
     // So, the pixel address is: BUFFER[x][y] = BUFFER + 4 * (y * SCREEN_WIDTH + x)
     mov x5, SCREEN_WIDTH
@@ -251,8 +318,6 @@ SMI_End:// End of the Loop
     
     // Branch to Caller.
     br lr
-
-
 
 // UTILITIES //
 Stack_Push_Caller: // Push (Save) Registers X0-X15 to the Stack. Allowing a Subroutine / Function to be called.
