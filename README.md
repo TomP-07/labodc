@@ -14,8 +14,8 @@ A partir de ahora, ya tienen el codigo en la carpeta y pueden modificarlo a gust
 - git commit
 Luego añadir un comentario en el editor de texto emergente con una explicacion de los cambios que realizaron
 - git push origin HEAD
-Listo.
 
+Listo.
 # Lab Org. y Arq. de Computadoras
 
 * Configuración de pantalla: `640x480` pixels, formato `ARGB` 32 bits.
