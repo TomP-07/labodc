@@ -6,10 +6,11 @@ Crear un directorio donde guardar los archivos del proyecto.
 - git pull origin main
 
 Dependiendo quien este programando:
-	- git branch -m anto 
+
+- git branch -m anto 
 	
-	O sino:
-	- git branch -m mati
+O sino:
+- git branch -m mati
 
 Luego:
 - git branch --set-upstream-to origin/main
