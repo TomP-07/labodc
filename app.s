@@ -33,45 +33,34 @@ b Stack_Push_Caller
 
 																									//	||
 																													// Basically, this line.
+
 mov x0, SCREEN_WIDTH
 lsr x0, x0, 1
 lsl x0, x0, 32
 mov x1, SCREEN_HEIGH
 lsr x1, x1, 1
 add x0, x0, x1
+// x0 = 320 | 240
 
-// x0 = 320 | 240 = 0x140 | 0xF0
-
-mov x1, 50 // x1 = 0x32
+mov x1, 50
 movz x2, 0xDD, lsl 16
-movk x2, 0xDDDD, lsl 00 // x2 = 0x000...00DDDDDD 
+movk x2, 0xD00D, lsl 00 
 mov x3, x20
 
-bl DrawCircle
+bl DibujarCirculo
 
-movz x0, 50, lsl 32
-movk x0, 50, lsl 00
+movz x0, 320, lsl 32
+movk x0, 240
 
-movz x1, 100
+movz x1, 5900, lsl 32
+movk x1, 5000
 
 movz x2, 0x99, lsl 32
-movk x2, 0x5555, lsl 00
-
-// x2 = 0x000000995555
-// Color = w2 = 0x00995555
+movk x2, 0x5555
 
 mov x3, x20
 
-bl DibujarCuadrado
-
-// Definimos un color.
-// Defino un altura. Digamos 100.
-
-DibujarRectangulo
-
-// Si el alto de la pantalla es de 480.
-
-// La autopista va a estar a partir de los 340
+bl DibujarRectangulo
 
 
 adr x18, . // Read Program Counter at this instruction
@@ -82,28 +71,24 @@ InfLoop:
 	b InfLoop
 
 
+/*
+    ----------------------------------
+        DRAW FUNCTIONS
+    ----------------------------------
+*/
 
-// Draw File //
-
-// x0=(X|Y), x1 el ancho, x2 el color, x3 direccion del frame buffer
-DibujarCuadrado:
-
-
-    // 000...000 |    Ancho
-    mov x4, x1
-    lsl x1, x1, 32 // Ancho | 000...000
-    add x1, x1, x4 // Ancho | Ancho
-
+// x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
+DibujarRectangulo:
 
     mov x4, x3 // x4 = Frame buffer
     mov x3, x2 // x3 = Color
-    adr x2, MapeadorCuadrado // Callback function of the iterator.
+    adr x2, CuadradoMap // Callback function of the iterator.
     
     adr x18, .
     add x18, x18, 12
     b Stack_Push_Callee
 
-    bl SquareMapIterator
+    bl RectangleMapIterator
     
     adr x18, .
     add x18, x18, 12
@@ -112,14 +97,10 @@ DibujarCuadrado:
     br lr
 
 // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
-DrawCircle: 
-    
+DibujarCirculo: 
     mov x12, x0 // x12 = Center
 
-	cmp x1, xzr
-	b.LE DC_Exit // Checks that is r > 0
-
-    // Setup SquareMapIterator Arguments
+    // Setup RectangleMapIterator Arguments
     
     // This whole thing setups x0 with the starting points of the Map Box.
     mov x14, x0
@@ -145,7 +126,7 @@ DrawCircle:
                 // x12 = Center, already in place.
 
     //mov x2, CircleMaper 
-    adr x2, CircleMaper // Callback function of the iterator.
+    adr x2, CirculoMap // Callback function of the iterator.
 
     mov x3, x12 // Center
     mov x4, x15 // Radius
@@ -165,7 +146,7 @@ DrawCircle:
     // x5 = 0x0000...000DDDDDD
     // Branch to Iterator
 	//mov x0, xzr
-    bl SquareMapIterator
+    bl RectangleMapIterator
 
     // Restore the Return Address (and others)
     adr x18, .
@@ -175,9 +156,8 @@ DrawCircle:
 DC_Exit: // Branch to Caller.
     br lr
 
-
 // x0=(X|Y), x1 el color, x2 direccion del frame buffer
-MapeadorCuadrado:
+CuadradoMap:
     mov x4, xzr
     mov w4, w0 // x4 = Y Position
     lsr x3, x0, 32 // x3 = X Position
@@ -195,7 +175,7 @@ MapeadorCuadrado:
     br lr
 
 // x0=(X|Y), x1=(Center X | Center Y), x2=r, x3 = Color, x4 = FrameBuffer
-CircleMaper:
+CirculoMap:
 
 
     lsr x5, x1, 32 // x5 = X Center
@@ -232,29 +212,29 @@ CM_1:
     br lr
 
 // x0=(X|Y), x1=(Width|Height), x2=Function(x0 = (X(I) | Y(I)), x1 = x3, x2 = x4, x3 = x5, x4 = x6, x5 = x7).  PRE: {0 <= X < SCREEN_WIDTH, 0 <= Y < SCREEN_HEIGH, Width > 0, Height > 0}
-SquareMapIterator:
+RectangleMapIterator:
+    lsr x10, x0, 32 // x10 = X
+    cmp x10, SCREEN_WIDTH
+    b.GT SMI_Return // If X is greater than Screen Width, return
+    mov x9, xzr
+    add w9, w9, w0 // x9 = Y
+    cmp x9, SCREEN_HEIGH 
+    b.GT SMI_Return // If Y is greater than Screen Height, return
+    lsr x8, x1, 32 
+    add x11, x10, x8
+    cmp x11, xzr
+    b.LT SMI_Return // If X + Width < 0, return
+    mov x8, xzr
+    add w8, w8, w1
+    add x11, x8, x9
+    cmp x11, xzr
+    b.LT SMI_Return // If Y + Height < 0, return
+    
     // Store the Callee Saved Registers.
     adr x18, .
     add x18, x18, 12
     b Stack_Push_Callee
 
-    // Fix Width if it is out of bounds.
-    lsr x10, x0, 32 // x10 = X
-    lsr x11, x1, 32 // x11 = Width
-    add x9, x10, x11
-    cmp x9, SCREEN_WIDTH
-    b.LS SMI_1
-        mov x9, SCREEN_WIDTH
-        sub x11, x9, x10 // New Width
-SMI_1:
-    // Fix Height if it is out of bounds.
-    mov x9, xzr
-    add w9, w0, w1
-    cmp x9, SCREEN_HEIGH
-    b.LS SMI_2
-        mov x9, SCREEN_HEIGH
-        sub w1, w9, w0 // New Height
-SMI_2:
     // Move everything to Caller Saved Registers so that function call does not kill its values.
     mov x19, x10 // x19 = Initial X
 
@@ -281,6 +261,19 @@ SMI_2:
 
 SMI_X_Loop: // Loop over the X axis.
 
+    lsr x0, x20, 32 // x0 = X
+    mov x1, xzr
+    mov w1, w20 // x1 = Y
+    cmp x0, xzr
+    b.LT SMI_After_Function // If X < 0, Ignore function call
+    cmp x1, xzr
+    b.LT SMI_After_Function // If Y < 0, Ignore function call
+    cmp x0, SCREEN_WIDTH 
+    b.GE SMI_After_Function // If X >= SCREEN_WIDTH, Ignore function call
+    cmp x1, SCREEN_HEIGH
+    b.GE SMI_After_Function // If Y >= SCREEN_HEIGHT, Ignore function call
+
+
     // Setup function arguments for function call.
     mov x0, x20 // Argument #1 (X Counter | Y Counter)
     mov x1, x23 // Argument #2
@@ -290,19 +283,19 @@ SMI_X_Loop: // Loop over the X axis.
     mov x5, x27 // Argument #6
     
     blr x22 // Branch to Function!
-
+SMI_After_Function:
     movz x9, 0x0001, lsl 32
     add x20, x20, x9 // Increase X Counter by 1
 
     lsr x9, x20, 32 // Temporal X Counter
     lsr x10, x21, 32 // Temporal X Counter Limit
-    cmp x9, x10 // Compare Y Counter against X Counter Limit.
-    b.HS SMI_Y_Loop
+    cmp x9, x10 // Compare X Counter against X Counter Limit.
+    b.GE SMI_Y_Loop
     b SMI_X_Loop // Continue of next column (X).
 SMI_Y_Loop: // Loop over the Y Axis
     add x20, x20, 1 // Increase Y Counter by 1
     cmp w20, w21 // Compare Y Counter against Y Counter Limit.
-    b.HS SMI_End
+    b.GE SMI_End
 	
 	mov x9, xzr
 	mov w9, w20
@@ -311,15 +304,33 @@ SMI_Y_Loop: // Loop over the Y Axis
     b SMI_X_Loop // Continue loop of next row (Y).
 
 SMI_End:// End of the Loop
+
     // Restore the LR Register.
     adr x18, .
     add x18, x18, 12
     b Stack_Pop_Callee
     
     // Branch to Caller.
+SMI_Return:
     br lr
 
-// UTILITIES //
+
+/*
+    ----------------------------------
+        END DRAW FUNCTIONS
+    ----------------------------------
+*/
+
+
+
+
+
+/*  
+    ----------------------------------
+        START UTILITY STACK FUNCTIONS
+    ----------------------------------
+*/
+
 Stack_Push_Caller: // Push (Save) Registers X0-X15 to the Stack. Allowing a Subroutine / Function to be called.
 	stp   x0, x1, [sp, #-16]!
 	stp   x2, x3, [sp, #-16]!
@@ -359,6 +370,12 @@ Stack_Pop_Callee: // Pop (Restore) Registers X19-X27 and LR Register from the St
 	ldp   x19, x20, [sp, #16]!
 	add sp, sp, 16
 	br x18 // Used as a Specific Register for Stack-Related Calls. Not ideal.
+
+/*
+    ----------------------------------
+        END UTILITY STACK FUNCTIONS
+    ----------------------------------
+*/
 
 
     /*
