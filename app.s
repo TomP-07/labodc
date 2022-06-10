@@ -63,6 +63,16 @@ mov x3, x20
 bl DibujarRectangulo
 
 
+mov x0, x20
+movz x1, 0xFFFF, lsl 00
+movk x1, 0x00FF, lsl 16
+bl DibujarFondoPantalla
+
+mov x0, x20
+bl DibujarCarretera
+
+
+
 adr x18, . // Read Program Counter at this instruction
 add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
 b Stack_Pop_Caller
@@ -76,6 +86,69 @@ InfLoop:
         DRAW FUNCTIONS
     ----------------------------------
 */
+
+// x0 = Direccion Frame Buffer, x1 Color
+DibujarFondoPantalla:
+    mov x3, x0
+    mov x2, x1
+    mov x0, xzr
+    movz x1, SCREEN_WIDTH, lsl 32
+    movk x1, SCREEN_HEIGH, lsl 00
+    
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Push_Callee
+    
+    bl DibujarRectangulo
+
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Pop_Callee
+
+    br lr
+
+// x0 = Direccion Frame Buffer
+DibujarCarretera:
+    mov x19, x0                     //x19 = x3 = Direccion Frame Buffer
+    mov x3, x0
+    mov x0, SCREEN_HEIGH            //x0 = altura
+    sub x0, x0, 50                  //x0 = altura - 50
+    mov x20, x0                     //x20 = x0
+
+    movz x1, SCREEN_WIDTH, lsl 32   //x1 = ancho | 000...000
+    movk x1, 100                    //x1 = ancho | 000...100
+    mov x21, x1                     //x21 = x1
+
+    movz x2, 0x0055, lsl 16         //x2 = 0x 0000...00550000
+    movk x2, 0x5555, lsl 00         //x2 = 0x 0000...00555555
+    mov x22, x2                     //x22 = x2
+
+    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
+    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
+    b Stack_Push_Callee             //salta a la funcion que guarda del x19 al x27 mas el x30
+
+    bl DibujarRectangulo            //salta a dibujarrectangulo y guarla la direc de la instruccion sig en x30
+
+///////////////////////////////////////////////////////////////
+// x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
+///////////////////////////////////////////////////////////////
+    //add x20, x20, 20
+    //mov x0, x20
+    
+    movk x21, 5, lsl 00
+    mov x1, x21
+
+    movz x22, 0x00AA, lsl 16
+    movk x22, 0x00AA, lsl 00
+    mov x2, x22
+    bl DibujarRectangulo
+
+    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
+    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
+    b Stack_Pop_Callee              //salta a la funcion que restaura del x19 al x27 mas el x30
+
+    br lr                           //vuelve a la direc gusrdada en x30 de la instruccion siguiente de donde se llamo a la funcion
+    
 
 // x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
 DibujarRectangulo:
@@ -244,7 +317,8 @@ RectangleMapIterator:
 	mov w15, w0
     add x20, x20, x15 // x20 = (X Counter | Y Counter) 
     
-    add x21, x19, x11 // X Counter Limit
+    lsr x15, x1, 32
+    add x21, x19, x15 // X Counter Limit
     lsl x21, x21, 32
 	mov x15, xzr
 	add w15, w1, w20
