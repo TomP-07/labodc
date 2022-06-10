@@ -2,10 +2,15 @@
 .equ SCREEN_HEIGH, 		480
 .equ BITS_PER_PIXEL,  	32
 
+.equ BUS_HEIGHT, 60
+.equ BUS_WIDTH, 130
+
+.equ LOOP_BURN_INSTRUCTIONS, 10000
+
 .globl main
 main:
 	// X0 contiene la direccion base del framebuffer
-	mov x20, x0	// Save framebuffer base address to x20	
+	mov x27, x0	// Save framebuffer base address to x27	
 
 /*	movz x10, 0xC7, lsl 16
 	movk x10, 0x1585, lsl 00
@@ -23,10 +28,10 @@ loop0:
 
 */
 
-// --- This whole block is used exactly as it is for Stack Function Calls. Not pretty, but simple and useful enough. --- //
+/*// --- This whole block is used exactly as it is for Stack Function Calls. Not pretty, but simple and useful enough. --- //
 adr x18, . // Read Program Counter at this instruction
 add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
-b Stack_Push_Caller
+b Stack_Push_Caller*/
 
 
 
@@ -34,7 +39,7 @@ b Stack_Push_Caller
 																									//	||
 																													// Basically, this line.
 
-mov x0, SCREEN_WIDTH
+/*mov x0, SCREEN_WIDTH
 lsr x0, x0, 1
 lsl x0, x0, 32
 mov x1, SCREEN_HEIGH
@@ -60,22 +65,65 @@ movk x2, 0x5555
 
 mov x3, x20
 
-bl DibujarRectangulo
+bl DibujarRectangulo*/
 
-
-mov x0, x20
-movz x1, 0xFFFF, lsl 00
-movk x1, 0x00FF, lsl 16
+mov x0, x27
+movz x1, 0x99db, lsl 00
+movk x1, 0x0070, lsl 16
 bl DibujarFondoPantalla
 
-mov x0, x20
+mov x0, 100
+mov x1, 80
+mov x2, x27
+bl DibujarSol
+
+mov x0, x27
 bl DibujarCarretera
 
+/*movz x0, 100, lsl 32
+movk x0, 100
+
+movz x1, 100, lsl 32
+movk x1, 200
+
+movz x2, 0x00FF, lsl 32
+movk x2, 0xFFFF 
+
+mov x3, x20
+
+bl DibujarEdificio*/
+
+mov x19, LOOP_BURN_INSTRUCTIONS
+mov x20, xzr
+
+mov x0, xzr
+add x0, x0, 70
+mov x1, SCREEN_HEIGH
+sub x1, x1, 24
+
+loopAnimacion: // La idea es tener aproximadamente 20 FPS
+    mov x20, xzr
+
+    add x0, x0, 1
+    mov x2, x27
+
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Push_Caller
+
+    bl DibujarColectivo
+
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Pop_Caller
 
 
-adr x18, . // Read Program Counter at this instruction
-add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
-b Stack_Pop_Caller
+killTime:
+    cmp x20, x19
+    b.HS loopAnimacion
+    add x20, x20, 1
+    b killTime
+
 
 InfLoop: 
 	b InfLoop
@@ -86,6 +134,208 @@ InfLoop:
         DRAW FUNCTIONS
     ----------------------------------
 */
+
+
+// x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer  
+DibujarEdificio:
+
+ adr x18, .                      //x18 = direccion de la linea en donde esta escrita
+    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr
+    b Stack_Push_Callee             //salta a la funcion que guarda del x19 al x27 mas el x30
+
+    bl DibujarRectangulo
+
+    // ventanas
+
+    //ventana1
+///////////////////x0///////////////
+    lsl x4, x0, 32
+    lsr x4, x4, 1        //x4 = mitad del ancho del edificio
+    sub x4, x4, 10        //x4 = mitad del ancho del edificio - 10 (X)
+    lsr x4, x4, 32
+
+    lsr w4, w0, 2        //x4 = (X|alto dividido 4)
+    sub w4, w4, 6        //x4 = (X|alto dividido 4 - 6)   x4=(X|Y)
+
+    mov x5, x0           // x5 = (X|Y) del edificio
+    mov x0, x4           // x0 = x4 (X|Y) primera ventana
+///////////////////x1/////////////////////
+    lsl x6, x1, 32
+    lsr x6, x6, 3        //x4 = ancho del edificio dividido 8
+    lsr x6, x6, 32    //x4 = mitad del ancho del edificio - 10 (X|000...000)
+
+    lsr w6, w1, 3        //x4 = (X|alto dividido 8)
+    sub w6, w6, 5        //x4 = (X|alto dividido 8 - 5)
+
+    mov x7, x1          // x7 = (Ancho|Alto) general
+    mov x1, x6          // x1 = x6
+
+////////////////////x2//////////////////////
+
+    movz x2, 0x0000, lsl 00        //x2 = 0x 0000...0000000
+
+
+    bl DibujarRectangulo            //salta a dibujarrectangulo y guarla la direc de la instruccion sig en x30
+
+    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
+    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr
+    b Stack_Pop_Callee              //salta a la funcion que restaura del x19 al x27 mas el x30
+
+    br lr                           //vuelve a la direc gusrdada en x30 de la instruccion siguiente de donde se llamo a la funcion
+
+
+// X0 = X, x1 = Y, x2 = FrameBuffer
+DibujarSol:
+
+    adr x18, .              
+    add x18, x18, 12                
+    b Stack_Push_Callee  
+
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    movz x1, 45
+
+    mov x3, x2
+
+    movz x2, 0x00EB, lsl 16
+    movk x2, 0xC334
+
+    bl DibujarCirculo
+
+    adr x18, .              
+    add x18, x18, 12                
+    b Stack_Pop_Callee  
+
+    br lr
+
+// X0 = X, x1=2, x2 = FrameBuffer
+DibujarColectivo:
+    adr x18, .              
+    add x18, x18, 12                
+    b Stack_Push_Callee            
+
+    mov x19, x2 // x19 = Frame Buffer
+    mov x20, x0 // x20 = X
+    mov x21, x1 // x21 = Y
+
+    mov x1, x21
+    sub x1, x1, BUS_HEIGHT
+
+    mov x0, x20
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    mov x1, BUS_WIDTH
+    lsl x1, x1, 32
+    add x1, x1, BUS_HEIGHT
+
+    movz x2, 0x00F7, lsl 16
+    movk x2, 0xFF00, lsl 00
+
+    mov x3, x19
+    
+    bl DibujarRectangulo
+
+    
+    mov x0, x20
+    add x0, x0, 33
+    lsl x0, x0, 32
+    add x1, x21, 3
+    add x0, x0, x1
+
+    movz x1, 10 // r = 10
+
+    mov x2, xzr
+    mov x3, x19
+
+    bl DibujarCirculo
+
+    mov x0, x20
+    add x0, x0, BUS_WIDTH
+    sub x0, x0, 33
+    lsl x0, x0, 32
+    add x1, x21, 3
+    add x0, x0, x1
+
+    movz x1, 10 // r = 10
+
+    mov x2, xzr
+    mov x3, x19
+
+    bl DibujarCirculo
+
+    mov x0, x20
+    add x0, x0, BUS_WIDTH
+    sub x0, x0, 30
+
+    mov x1, x21
+    sub x1, x1, BUS_HEIGHT
+    add x1, x1, 10
+
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    movz x1, 20, lsl 32
+    movk x1, 40
+
+    movz x2, 0x00E0, lsl 16
+    movk x2, 0xFFFF
+
+    mov x3, x19
+
+    bl DibujarRectangulo
+
+    add x0, x20, 6
+    mov x1, x21
+    sub x1, x1, BUS_HEIGHT
+    add x1, x1, 10
+
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    movz x1, 20, lsl 32
+    movk x1, 40, lsl 00
+
+    movz x2, 0x00E0, lsl 16
+    movk x2, 0xFFFF
+
+    mov x3, x19
+
+    bl DibujarRectangulo
+
+
+    add x0, x20, BUS_WIDTH
+    sub x0, x0, 5
+
+    sub x1, x21, BUS_HEIGHT
+    add x1, X1, 3
+    
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    movz x1, 5
+    lsl x1, x1, 32
+    
+    mov x2, BUS_HEIGHT
+    sub x2, x2, 15
+
+    add x1, x1, x2
+
+    movz x2, 0x00E0, lsl 16
+    movk x2, 0xFFFF
+
+    mov x3, x19
+
+    bl DibujarRectangulo
+
+
+
+    adr x18, .                      
+    add x18, x18, 12                
+    b Stack_Pop_Callee              
+
+    br lr
 
 // x0 = Direccion Frame Buffer, x1 Color
 DibujarFondoPantalla:
@@ -109,39 +359,56 @@ DibujarFondoPantalla:
 
 // x0 = Direccion Frame Buffer
 DibujarCarretera:
-    mov x19, x0                     //x19 = x3 = Direccion Frame Buffer
-    mov x3, x0
-    mov x0, SCREEN_HEIGH            //x0 = altura
-    sub x0, x0, 50                  //x0 = altura - 50
-    mov x20, x0                     //x20 = x0
-
-    movz x1, SCREEN_WIDTH, lsl 32   //x1 = ancho | 000...000
-    movk x1, 100                    //x1 = ancho | 000...100
-    mov x21, x1                     //x21 = x1
-
-    movz x2, 0x0055, lsl 16         //x2 = 0x 0000...00550000
-    movk x2, 0x5555, lsl 00         //x2 = 0x 0000...00555555
-    mov x22, x2                     //x22 = x2
-
     adr x18, .                      //x18 = direccion de la linea en donde esta escrita
     add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
     b Stack_Push_Callee             //salta a la funcion que guarda del x19 al x27 mas el x30
 
+    mov x19, x0                     //x19 = Direccion Frame Buffer
+    mov x3, x0
+    mov x0, SCREEN_HEIGH            //x0 = altura
+    sub x0, x0, 120                  //x0 = altura - 50
+    mov x20, x0                     //x20 = x0
+
+    movz x1, SCREEN_WIDTH, lsl 32   //x1 = ancho | 000...000
+    movk x1, 120                    //x1 = ancho | 000...100
+    mov x21, x1                     //x21 = x1
+
+    movz x2, 0x0055, lsl 16         //x2 = 0x 0000...00550000
+    movk x2, 0x5555, lsl 00         //x2 = 0x 0000...00555555
+
     bl DibujarRectangulo            //salta a dibujarrectangulo y guarla la direc de la instruccion sig en x30
-
-///////////////////////////////////////////////////////////////
-// x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
-///////////////////////////////////////////////////////////////
-    //add x20, x20, 20
-    //mov x0, x20
     
-    movk x21, 5, lsl 00
+    mov x3, x19
+    mov x0, x20
+    add x0, x0, 50 
     mov x1, x21
-
-    movz x22, 0x00AA, lsl 16
-    movk x22, 0x00AA, lsl 00
+    movk x1, 1
     mov x2, x22
+    movk x2, 0xFB00, lsl 00
+    movk x2, 0x00FF, lsl 16
     bl DibujarRectangulo
+
+    mov x3, x19
+    mov x0, x20
+    add x0, x0, 58
+    mov x1, x21
+    movk x1, 1
+    mov x2, x22
+    movk x2, 0xFB00, lsl 00
+    movk x2, 0x00FF, lsl 16
+    bl DibujarRectangulo
+
+/*
+mov x0, xzr
+    mov x1, BUS_WIDTH
+    lsl x1, x1, 32
+    add x1, x1, BUS_HEIGHT
+
+    movz x2, 0x0000, lsl 00
+    
+    mov x3, x19
+
+    bl DibujarRectangulo  */
 
     adr x18, .                      //x18 = direccion de la linea en donde esta escrita
     add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
