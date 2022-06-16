@@ -4,13 +4,15 @@
 
 .equ BUS_HEIGHT, 60
 .equ BUS_WIDTH, 130
+.equ BUS_Y_UPPER_LIMIT, 390
+.equ BUS_Y_DOWN_LIMIT, 456
 
-.equ LOOP_BURN_INSTRUCTIONS, 10000
+.equ LOOP_BURN_MULTIPLIER, 1
+
 
 .globl main
 main:
-	// X0 contiene la direccion base del framebuffer
-	mov x27, x0	// Save framebuffer base address to x27	
+
 
 /*	movz x10, 0xC7, lsl 16
 	movk x10, 0x1585, lsl 00
@@ -28,57 +30,24 @@ loop0:
 
 */
 
-/*// --- This whole block is used exactly as it is for Stack Function Calls. Not pretty, but simple and useful enough. --- //
-adr x18, . // Read Program Counter at this instruction
-add x18, x18, 12 // Use x18 as a Special Register for Stack Calls. This makes sures that the Stack Call jumps back two lines after this one.
-b Stack_Push_Caller*/
-
-
-
-
-																									//	||
-																													// Basically, this line.
-
-/*mov x0, SCREEN_WIDTH
-lsr x0, x0, 1
-lsl x0, x0, 32
-mov x1, SCREEN_HEIGH
-lsr x1, x1, 1
-add x0, x0, x1
-// x0 = 320 | 240
-
-mov x1, 50
-movz x2, 0xDD, lsl 16
-movk x2, 0xD00D, lsl 00 
-mov x3, x20
-
-bl DibujarCirculo
-
-movz x0, 320, lsl 32
-movk x0, 240
-
-movz x1, 5900, lsl 32
-movk x1, 5000
-
-movz x2, 0x99, lsl 32
-movk x2, 0x5555
-
-mov x3, x20
-
-bl DibujarRectangulo*/
-
-mov x0, x27
+// X0 contiene la direccion base del framebuffer
+mov x27, x0	// Save framebuffer base address to x27	
+bl Reset_Sub_F_Buffer
+    
+/*
+ldr x0, =SUB_F_BUFFER
 movz x1, 0x99db, lsl 00
-movk x1, 0x0070, lsl 16
-bl DibujarFondoPantalla
-
-mov x0, 100
 mov x1, 80
-mov x2, x27
+ldr x2, =SUB_F_BUFFER
 bl DibujarSol
 
-mov x0, x27
+ldr x0, =SUB_F_BUFFER
 bl DibujarCarretera
+
+mov x8, x27
+bl Flush_Sub_F_Buffer
+*/
+
 
 /*movz x0, 100, lsl 32
 movk x0, 100
@@ -93,19 +62,67 @@ mov x3, x20
 
 bl DibujarEdificio*/
 
-mov x19, LOOP_BURN_INSTRUCTIONS
+
+
+
+movz x19, 0x0000, lsl 00
+mov x20, LOOP_BURN_MULTIPLIER
+mul x19, x19, x20
 mov x20, xzr
 
-mov x0, xzr
-add x0, x0, 70
-mov x1, SCREEN_HEIGH
-sub x1, x1, 24
 
-loopAnimacion: // La idea es tener aproximadamente 20 FPS
-    mov x20, xzr
+// X1 Bus Start Y Position
+movz x21, SCREEN_HEIGH - 24, lsl 00 // Bus Y Position
 
-    add x0, x0, 1
-    mov x2, x27
+mov x26, 1 // x26 = Frame Counter
+
+
+loopAnimacion:
+    
+
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Push_Caller
+
+
+
+
+    ldr x0, =SUB_F_BUFFER // Framebuffer
+    movz x1, 0x99db, lsl 00 // Color
+    movk x1, 0x0070, lsl 16 // Color
+    mov x2, x26 // Pass Frame Number
+
+    bl DibujarFondoPantalla
+
+    ldr x0, =SUB_F_BUFFER
+    bl DibujarCarretera
+
+    adr x18, .
+    add x18, x18, 12
+    b Stack_Pop_Caller
+
+
+
+
+    // Prepare DibujarColectivo Args,
+    
+
+
+    
+
+
+    // IF Frame Number < 1000
+    cmp x26, 1000
+    b.HI LA_END_BUS_IF
+    sub x21, x21, 1
+    cmp x21, BUS_Y_UPPER_LIMIT
+    b.HS LA_END_BUS_IF
+    mov x21, BUS_Y_UPPER_LIMIT
+
+LA_END_BUS_IF:
+    mov x0, 70
+    mov x1, x21
+    ldr x2, =SUB_F_BUFFER
 
     adr x18, .
     add x18, x18, 12
@@ -118,12 +135,18 @@ loopAnimacion: // La idea es tener aproximadamente 20 FPS
     b Stack_Pop_Caller
 
 
+
+
+    mov x8, x27
+    bl Flush_Sub_F_Buffer
+    
+    mov x20, xzr // Reset burn time counter
+    add x26, x26, 1
 killTime:
     cmp x20, x19
     b.HS loopAnimacion
     add x20, x20, 1
     b killTime
-
 
 InfLoop: 
 	b InfLoop
@@ -137,7 +160,7 @@ InfLoop:
 
 
 // x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer  
-DibujarEdificio:
+/*DibujarEdificio:
 
  adr x18, .                      //x18 = direccion de la linea en donde esta escrita
     add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr
@@ -183,33 +206,10 @@ DibujarEdificio:
 
     br lr                           //vuelve a la direc gusrdada en x30 de la instruccion siguiente de donde se llamo a la funcion
 
+*/
 
-// X0 = X, x1 = Y, x2 = FrameBuffer
-DibujarSol:
 
-    adr x18, .              
-    add x18, x18, 12                
-    b Stack_Push_Callee  
-
-    lsl x0, x0, 32
-    add x0, x0, x1
-
-    movz x1, 45
-
-    mov x3, x2
-
-    movz x2, 0x00EB, lsl 16
-    movk x2, 0xC334
-
-    bl DibujarCirculo
-
-    adr x18, .              
-    add x18, x18, 12                
-    b Stack_Pop_Callee  
-
-    br lr
-
-// X0 = X, x1=2, x2 = FrameBuffer
+// X0 = X, x1=Y, x2 = FrameBuffer
 DibujarColectivo:
     adr x18, .              
     add x18, x18, 12                
@@ -337,9 +337,10 @@ DibujarColectivo:
 
     br lr
 
-// x0 = Direccion Frame Buffer, x1 Color
+// x0 = Direccion Frame Buffer, x1 Color, x2 Frame Number
 DibujarFondoPantalla:
     mov x3, x0
+    mov x19, x2 // x19 = Frame Number
     mov x2, x1
     mov x0, xzr
     movz x1, SCREEN_WIDTH, lsl 32
@@ -351,9 +352,127 @@ DibujarFondoPantalla:
     
     bl DibujarRectangulo
 
+    mov x0, 100
+    mov x1, 80
+    ldr x2, =SUB_F_BUFFER
+    bl DibujarSol
+
+    mov x0, 700
+    mov x1, 150
+
+    // If Frame Number is < 1600
+    cmp x19, 1600
+    b.HI DFP_Cloud_IF_1
+    mov x8, 1
+    mul x9, x8, x19
+    sub x0, x0, x9
+DFP_Cloud_IF_1:
+    bl DibujarNube
+
     adr x18, . 
     add x18, x18, 12
     b Stack_Pop_Callee
+
+    br lr
+
+
+// x0= X Center, x1 = Y Center
+DibujarNube:    
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Push_Callee
+
+// x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
+
+    mov x19, x0 // x19 = X|Y Position
+    lsl x19, x19, 32
+    add x19, x19, x1
+    
+    mov x21, 30 // x21 = Radio
+
+    movz x22, 0x00FF, lsl 16 // x22 = Color
+    movk x22, 0xFFFF
+
+    mov x0, x19
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+
+    movz x4, 20
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 20
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 45
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 25
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+    
+    movz x4, 70
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 15
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 20
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 10
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 50
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 3
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Pop_Callee
+
+    br lr
+
+// X0 = X, x1 = Y, x2 = FrameBuffer
+DibujarSol:
+
+    adr x18, .              
+    add x18, x18, 12                
+    b Stack_Push_Callee  
+
+    lsl x0, x0, 32
+    add x0, x0, x1
+
+    movz x1, 45
+
+    mov x3, x2
+
+    movz x2, 0x00EB, lsl 16
+    movk x2, 0xC334
+
+    bl DibujarCirculo
+
+    adr x18, .              
+    add x18, x18, 12                
+    b Stack_Pop_Callee  
 
     br lr
 
@@ -668,9 +787,61 @@ SMI_Return:
 
 /*  
     ----------------------------------
-        START UTILITY STACK FUNCTIONS
+        START UTILITY FUNCTIONS
     ----------------------------------
 */
+// x8 = Framebuffer
+Flush_Sub_F_Buffer:
+    movz x0, 0xC000, lsl 00
+    movk x0, 0x0012, lsl 16
+    lsr x0, x0, 2 // X0 Limit
+    mov x1, xzr // x1 Counter
+
+    mov x5, xzr
+
+    mov x6, xzr
+    ldr x6, =SUB_F_BUFFER
+FSFB_LOOP:
+    mov x3, x1
+    lsl x3, x3, 2
+    add x4, x3, x6
+    
+    ldur w5, [x4] // Load to w5 Sub FrameBuffer Data
+
+    add x4, x3, x8
+    stur w5, [x4] // Store w5 Data to FrameBuffer
+    add x1, x1, 1
+
+    cmp x1, x0
+    b.HS FSFB_END
+    b FSFB_LOOP
+FSFB_END:
+    br lr
+
+Reset_Sub_F_Buffer:
+    mov x9, xzr
+    ldr x9, =SUB_F_BUFFER
+
+    movz x0, 0xC000, lsl 00
+    movk x0, 0x0012, lsl 16
+    lsr x0, x0, 2 // X0 Limit
+    mov x1, xzr // x1 Counter
+    movz x2, 0xAAAA, lsl 00 // x2 Color
+
+RSFB_LOOP:
+    mov x3, x1
+    lsl x3, x3, 2
+    add x3, x3, x9
+    stur w2, [x3]
+    add x1, x1, 1
+
+    cmp x1, x0
+    b.HS RSFB_END
+    b RSFB_LOOP
+RSFB_END:
+    br lr
+
+
 
 Stack_Push_Caller: // Push (Save) Registers X0-X15 to the Stack. Allowing a Subroutine / Function to be called.
 	stp   x0, x1, [sp, #-16]!
@@ -734,12 +905,8 @@ Stack_Pop_Callee: // Pop (Restore) Registers X19-X27 and LR Register from the St
         fmov x8, d0
         br lr
     */
-
-
-	
-
-
-
+.data
+SUB_F_BUFFER: .skip 0x12C000 // 640 * 480 * 4
 
 
 
