@@ -627,6 +627,7 @@ DibujarFondoPantalla:
     mov x8, 1
     mul x9, x8, x19
     sub x0, x0, x9
+    mov x4, 2
 DFP_Cloud_IF_1:
     bl DibujarNube
 
@@ -637,13 +638,11 @@ DFP_Cloud_IF_1:
     br lr
 
 
-// x0= X Center, x1 = Y Center
+// x0= X Center, x1 = Y Center, x2 = Tipo (0,1,2)
 DibujarNube:    
     adr x18, . 
     add x18, x18, 12
     b Stack_Push_Callee
-
-// x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
 
     mov x19, x0 // x19 = X|Y Position
     lsl x19, x19, 32
@@ -654,12 +653,15 @@ DibujarNube:
     movz x22, 0x00FF, lsl 16 // x22 = Color
     movk x22, 0xFFFF
 
+    cmp x4, 0 // Si es Tipo 0
+    b.NE DB_Skip_0
+
     mov x0, x19
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
-    bl DibujarCirculo
 
+    bl DibujarCirculo
 
     movz x4, 20
     lsl x4, x4, 32
@@ -701,6 +703,92 @@ DibujarNube:
     lsl x4, x4, 32
     add x0, x19, x4
     add x0, x0, 3
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Pop_Callee
+
+    br lr
+DB_Skip_0:
+    
+    cmp x4, 0 // Si es Tipo 1
+    b.NE DB_Skip_1
+    // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer
+    mov x0, x19
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    movz x4, 20
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 20
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 20
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 10
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 50
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 3
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Pop_Callee
+
+    br lr
+    
+DB_Skip_1:
+    // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer
+    mov x0, x19
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    movz x4, 70           //P horizontal
+    lsl x4, x4, 32 
+    add x0, x19, x4
+    sub x0, x0, 5           //P Vertical
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 40 
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 30
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo 
+
+    movz x4, 34
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 21
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
