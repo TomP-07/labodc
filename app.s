@@ -7,7 +7,7 @@
 .equ BUS_Y_UPPER_LIMIT, 390
 .equ BUS_Y_DOWN_LIMIT, 456
 
-.equ LOOP_BURN_MULTIPLIER, 1
+.equ SPEED_MULTIPLIER, 2
 
 
 .globl main
@@ -66,7 +66,8 @@ bl DibujarEdificio*/
 
 
 movz x19, 0x0000, lsl 00
-mov x20, LOOP_BURN_MULTIPLIER
+//mov x20, LOOP_BURN_MULTIPLIER
+mov x20, 1
 mul x19, x19, x20
 mov x20, xzr
 
@@ -232,7 +233,7 @@ LA_END_CAR_7_SKIP_IF:
     b.LS LA_END_BUS_1_SKIP_IF
     cmp x26, 200
     b.HS LA_END_BUS_1_SKIP_IF
-    sub x21, x21, 1
+    sub x21, x21, SPEED_MULTIPLIER
     cmp x21, BUS_Y_UPPER_LIMIT
     b.HS LA_END_BUS_1_SKIP_IF
     mov x21, BUS_Y_UPPER_LIMIT
@@ -243,18 +244,20 @@ LA_END_BUS_1_SKIP_IF:
     b.LS LA_END_BUS_2_SKIP_IF
     cmp x26, 400
     b.HS LA_END_BUS_2_SKIP_IF
-    add x21, x21, 1
+    add x21, x21, SPEED_MULTIPLIER
     cmp x21, BUS_Y_DOWN_LIMIT
     b.LO LA_END_BUS_2_SKIP_IF
     mov x21, BUS_Y_DOWN_LIMIT
 LA_END_BUS_2_SKIP_IF:
+
+
 
 // IF Frame Number > 545 && < 650
     cmp x26, 545
     b.LS LA_END_BUS_3_SKIP_IF
     cmp x26, 650
     b.HS LA_END_BUS_3_SKIP_IF
-    sub x21, x21, 1
+    sub x21, x21, SPEED_MULTIPLIER
     cmp x21, BUS_Y_UPPER_LIMIT
     b.HS LA_END_BUS_3_SKIP_IF
     mov x21, BUS_Y_UPPER_LIMIT
@@ -265,7 +268,7 @@ LA_END_BUS_3_SKIP_IF:
     b.LS LA_END_BUS_4_SKIP_IF
     cmp x26, 770
     b.HS LA_END_BUS_4_SKIP_IF
-    add x21, x21, 1
+    add x21, x21, SPEED_MULTIPLIER
     cmp x21, BUS_Y_DOWN_LIMIT
     b.LO LA_END_BUS_4_SKIP_IF
     mov x21, BUS_Y_DOWN_LIMIT
@@ -294,7 +297,8 @@ LA_END_BUS_4_SKIP_IF:
     bl Flush_Sub_F_Buffer
     
     mov x20, xzr // Reset burn time counter
-    add x26, x26, 1
+    mov x9, SPEED_MULTIPLIER
+    add x26, x26, x9
 killTime:
     cmp x20, x19
     b.HS loopAnimacion
@@ -1063,10 +1067,12 @@ FSFB_LOOP:
     lsl x3, x3, 2
     add x4, x3, x6
     
-    ldur w5, [x4] // Load to w5 Sub FrameBuffer Data
+    //ldur w5, [x4] // Load to w5 Sub FrameBuffer Data
+    ldp w11, w12, [x4]
 
     add x4, x3, x8
-    stur w5, [x4] // Store w5 Data to FrameBuffer
+    //stur w5, [x4] // Store w5 Data to FrameBuffer
+    stp w11, w12, [x4]
     add x1, x1, 1
 
     cmp x1, x0
