@@ -7,7 +7,7 @@
 .equ BUS_Y_UPPER_LIMIT, 390 // Upper Limit of the Bus Y Position
 .equ BUS_Y_DOWN_LIMIT, 456 // Lower Limit of The Bus Y Position
 
-.equ SPEED_MULTIPLIER, 1 // Speed Multiplier, If it runs too slow increase this, but it will not be as good as with 1.
+.equ SPEED_MULTIPLIER, 1 // Speed Multiplier, If it runs too slow increase this, 2 is nice to look btw.
 
 
 .globl main
