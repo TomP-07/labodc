@@ -4,10 +4,10 @@
 
 .equ BUS_HEIGHT, 60
 .equ BUS_WIDTH, 130
-.equ BUS_Y_UPPER_LIMIT, 390
-.equ BUS_Y_DOWN_LIMIT, 456
+.equ BUS_Y_UPPER_LIMIT, 390 // Upper Limit of the Bus Y Position
+.equ BUS_Y_DOWN_LIMIT, 456 // Lower Limit of The Bus Y Position
 
-.equ SPEED_MULTIPLIER, 2
+.equ SPEED_MULTIPLIER, 1 // Speed Multiplier, If it runs too slow increase this, but it will not be as good as with 1.
 
 
 .globl main
@@ -419,7 +419,7 @@ DibujarColectivo:
 
     mov x3, x19
     
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja el cuerpo principal
 
     mov x0, x20
     add x0, x0, 33
@@ -432,7 +432,7 @@ DibujarColectivo:
     mov x2, xzr
     mov x3, x19
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la rueda de la izquierda
 
     mov x0, x20
     add x0, x0, BUS_WIDTH
@@ -446,7 +446,7 @@ DibujarColectivo:
     mov x2, xzr
     mov x3, x19
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la rueda de la derecha
 
     mov x0, x20
     add x0, x0, BUS_WIDTH
@@ -467,7 +467,7 @@ DibujarColectivo:
 
     mov x3, x19
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja una puerta
 
     add x0, x20, 6
     mov x1, x21
@@ -485,7 +485,7 @@ DibujarColectivo:
 
     mov x3, x19
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la otra puerta
 
 
     add x0, x20, BUS_WIDTH
@@ -510,7 +510,7 @@ DibujarColectivo:
 
     mov x3, x19
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la ventana
 
     lsl x22, x20, 32
     add x22, x22, x21
@@ -529,7 +529,7 @@ DibujarColectivo:
     
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la o de "odc", cool
 
     mov x0, 40
     lsl x0, x0, 32
@@ -559,7 +559,7 @@ DibujarColectivo:
     
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la panza de la d de "odc"
 
     mov x0, 60
     lsl x0, x0, 32
@@ -588,7 +588,7 @@ DibujarColectivo:
     
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja el palito de la d de "odc"
 
     // Draws the c of odc
 
@@ -618,7 +618,7 @@ DibujarColectivo:
     
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la c de "odc"
 
     // Pop the Callee Saved Registers. (Restore LR)
     adr x18, .                      
@@ -650,7 +650,7 @@ DibujarAuto:
     
     mov x2, x21
     ldr x3, =SUB_F_BUFFER
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja el cuerpo principal
 
     mov x0, x19
     add x0, x0, 20
@@ -664,7 +664,7 @@ DibujarAuto:
     mov x2, x21
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la parte superior
 
     mov x0, x19
     add x0, x0, 25
@@ -680,7 +680,7 @@ DibujarAuto:
 
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la primera ventana
 
     mov x0, x19
     add x0, x0, 48
@@ -696,7 +696,7 @@ DibujarAuto:
 
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la segunda ventana
 
     mov x0, x19
     add x0, x0, 20
@@ -709,7 +709,7 @@ DibujarAuto:
     mov x2, xzr
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la primera rueda!
 
     mov x0, x19
     add x0, x0, 70
@@ -722,7 +722,7 @@ DibujarAuto:
     mov x2, xzr
     ldr x3, =SUB_F_BUFFER
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja la segunda rueda!
     
     // Pop the Callee Saved Registers. (Restore LR)
     adr x18, . 
@@ -746,48 +746,48 @@ DibujarFondoPantalla:
     add x18, x18, 12
     b Stack_Push_Callee
     
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja el cielo
 
     mov x0, 100
     mov x1, 80
     ldr x2, =SUB_F_BUFFER
-    bl DibujarSol
+    bl DibujarSol // Dibuja el solsito
 
     mov x0, 700
     sub x0, x0, x19
     mov x1, 150
     mov x2, 0
-    bl DibujarNube
+    bl DibujarNube // Dibuja una nube tipo 0, desplazada en pantalla para que aparezca en el tiempo correcto.
 
     mov x0, 900
     sub x0, x0, x19
     mov x1, 50
     mov x2, 1
-    bl DibujarNube
+    bl DibujarNube // Dibuja una nube tipo 1, desplazada en pantalla para que aparezca en el tiempo correcto.
 
     mov x0, 1200
     sub x0, x0, x19
     mov x1, 120
-    mov x2, 2
+    mov x2, 2 // Dibuja una nube tipo 2, desplazada en pantalla para que aparezca en el tiempo correcto.
     bl DibujarNube
 
     mov x0, 1500
     sub x0, x0, x19
     mov x1, 100
-    mov x2, 0
-    bl DibujarNube
+    mov x2, 0   
+    bl DibujarNube // Dibuja una nube tipo 0, desplazada en pantalla para que aparezca en el tiempo correcto.
 
     mov x0, 1700
     sub x0, x0, x19
     mov x1, 180
     mov x2, 1
-    bl DibujarNube
+    bl DibujarNube // Dibuja una nube tipo 1, desplazada en pantalla para que aparezca en el tiempo correcto.
 
     mov x0, 2050
     sub x0, x0, x19
     mov x1, 100
     mov x2, 2
-    bl DibujarNube
+    bl DibujarNube // Dibuja una nube tipo 2, desplazada en pantalla para que aparezca en el tiempo correcto.
 
 
     adr x18, . 
@@ -811,6 +811,11 @@ DibujarNube:
 
     movz x22, 0x00FF, lsl 16 // x22 = Color
     movk x22, 0xFFFF
+
+/*
+    En resumen, cada llamada a DibujarCirculo dibuja un circulo blanco, luego desplazando las posiciones del centro de estos circulos
+    formamos figuras que parecen nubes, aun que no son mas que circulos superpuestos. Hay 3 nubes diferentes, de tipo 0, 1 y 2
+*/
 
     // Tipo 0
     cmp x2, 0
@@ -1024,6 +1029,10 @@ DibujarSol:
     mov x20, x1 // x20 Y Position
     mov x21, x2 // x21 Frame Buffer
 
+/*
+    Los 3 dibujos del sol son para lograr un efecto de degrades en los bordes. :)
+*/
+
     lsl x0, x0, 32
     add x0, x0, x1
 
@@ -1033,7 +1042,7 @@ DibujarSol:
     movz x2, 0x00D7, lsl 16
     movk x2, 0xDE00
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Dibuja el sol con un color oscuro
 
     lsl x0, x19, 32
     add x0, x0, x20
@@ -1044,7 +1053,7 @@ DibujarSol:
     movk x2, 0xF002
     mov x3, x21
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Redibuja la mayoria del sol con un color intermedio
 
     lsl x0, x19, 32
     add x0, x0, x20
@@ -1055,7 +1064,7 @@ DibujarSol:
     movk x2, 0xFF00
     mov x3, x21
 
-    bl DibujarCirculo
+    bl DibujarCirculo // Redibuja la mayoria del sol con un color mas claro
 
     adr x18, .              
     add x18, x18, 12                
@@ -1083,7 +1092,7 @@ DibujarCarretera:
     movz x2, 0x0055, lsl 16         
     movk x2, 0x5555, lsl 00         
 
-    bl DibujarRectangulo            
+    bl DibujarRectangulo // Dibuja el asfalto
     
     mov x3, x19
     mov x0, x20
@@ -1093,7 +1102,7 @@ DibujarCarretera:
     mov x2, x22
     movk x2, 0xFB00, lsl 00
     movk x2, 0x00FF, lsl 16
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja una de las lineas de la carretera
 
     mov x3, x19
     mov x0, x20
@@ -1103,7 +1112,7 @@ DibujarCarretera:
     mov x2, x22
     movk x2, 0xFB00, lsl 00
     movk x2, 0x00FF, lsl 16
-    bl DibujarRectangulo
+    bl DibujarRectangulo // Dibuja la otra linea de la carretera
 
     adr x18, .                      
     add x18, x18, 12                 
@@ -1124,6 +1133,7 @@ DibujarRectangulo:
     b Stack_Push_Callee
 
     // This is awesome btw
+    // Basicamente hace todo el trabajo, la funcion DibujarRectangulo es meramente auxiliar
     bl RectangleMapIterator
     
     adr x18, .
@@ -1187,6 +1197,7 @@ DC_Exit: // Branch to Caller.
     br lr
 
 // Just a Pixel Painter with a Fancy Name
+// Basicamente pinta cada pixel que se le pasa con el color que se le pasa, super easy.
 // x0=(X|Y), x1 el color, x2 direccion del frame buffer
 TheCrazyPixelPainter:
     mov x4, xzr
@@ -1243,13 +1254,13 @@ CirculoMap:
 CM_1:
     br lr
 
-/*
+/*  
     This function is awesome,
     For every pixel inside a box starting from X|Y Position, with a width and height set the function
     stored at x2 will be called and arguments in register x3 to x7 will be passed to that function
     
     Isn't it cool ? :D
-    Like, one function, draw almost everything
+    Like, one function, draw almost everything ;)
 */
 // x0=(X|Y), x1=(Width|Height), x2=Function(x0 = (X(I) | Y(I)), x1 = x3, x2 = x4, x3 = x5, x4 = x6, x5 = x7).  PRE: {0 <= X < SCREEN_WIDTH, 0 <= Y < SCREEN_HEIGH, Width > 0, Height > 0}
 RectangleMapIterator:
