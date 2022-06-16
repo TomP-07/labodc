@@ -7,7 +7,7 @@
 .equ BUS_Y_UPPER_LIMIT, 390
 .equ BUS_Y_DOWN_LIMIT, 456
 
-.equ SPEED_MULTIPLIER, 2
+.equ SPEED_MULTIPLIER, 1
 
 
 .globl main
