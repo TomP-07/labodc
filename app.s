@@ -85,8 +85,6 @@ loopAnimacion:
     b Stack_Push_Caller
 
 
-
-
     ldr x0, =SUB_F_BUFFER // Framebuffer
     movz x1, 0x99db, lsl 00 // Color
     movk x1, 0x0070, lsl 16 // Color
@@ -97,6 +95,129 @@ loopAnimacion:
     ldr x0, =SUB_F_BUFFER
     bl DibujarCarretera
 
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x00FF, lsl 16
+    movk x2, 0x0000
+
+    // IF Frame Number < 400
+    cmp x26, 400
+    b.HI LA_END_CAR_1_SKIP_IF
+    mov x3, 4       
+    mul x3, x26, x3
+    sub x0, x0, x3
+
+    bl DibujarAuto
+LA_END_CAR_1_SKIP_IF:
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x00FF, lsl 16
+    movk x2, 0x0000
+    
+    // IF Frame Number > 120 && < 400 
+    cmp x26, 120
+    b.LO LA_END_CAR_2_SKIP_IF
+    cmp x26, 400
+    b.HI LA_END_CAR_2_SKIP_IF
+
+    sub x3, x26, 120
+    mov x4, 4
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_2_SKIP_IF:
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x0000, lsl 16
+    movk x2, 0xFF00
+    
+    // IF Frame Number > 300 && < 600 
+    cmp x26, 300
+    b.LS LA_END_CAR_3_SKIP_IF
+    cmp x26, 600
+    b.HS LA_END_CAR_3_SKIP_IF
+
+    sub x3, x26, 300
+    mov x4, 7
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_3_SKIP_IF:
+    
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x0000, lsl 16
+    movk x2, 0xFF00
+    
+    // IF Frame Number > 350 && < 650 
+    cmp x26, 350
+    b.LS LA_END_CAR_4_SKIP_IF
+    cmp x26, 650
+    b.HS LA_END_CAR_4_SKIP_IF
+
+    sub x3, x26, 350
+    mov x4, 5
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_4_SKIP_IF:
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x00FF
+    
+    // IF Frame Number > 550 && < 650 
+    cmp x26, 550
+    b.LS LA_END_CAR_5_SKIP_IF
+    cmp x26, 650
+    b.HS LA_END_CAR_5_SKIP_IF
+
+    sub x3, x26, 550
+    mov x4, 12
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_5_SKIP_IF:
+
+        movz x0, 800
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x00FF
+    
+    // IF Frame Number > 600 && < 700 
+    cmp x26, 600
+    b.LS LA_END_CAR_6_SKIP_IF
+    cmp x26, 700
+    b.HS LA_END_CAR_6_SKIP_IF
+
+    sub x3, x26, 600
+    mov x4, 16
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_6_SKIP_IF:
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x00AA, lsl 16
+    movk x2, 0xAAAA
+    
+    // IF Frame Number > 610 && < 900
+    cmp x26, 610
+    b.LS LA_END_CAR_7_SKIP_IF
+    cmp x26, 910
+    b.HS LA_END_CAR_7_SKIP_IF
+
+    sub x3, x26, 610
+    mov x4, 4
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_7_SKIP_IF:
+
     adr x18, .
     add x18, x18, 12
     b Stack_Pop_Caller
@@ -106,20 +227,52 @@ loopAnimacion:
 
     // Prepare DibujarColectivo Args,
     
-
-
-    
-
-
-    // IF Frame Number < 1000
-    cmp x26, 1000
-    b.HI LA_END_BUS_IF
+    // IF Frame Number > 80 && < 200
+    cmp x26, 80
+    b.LS LA_END_BUS_1_SKIP_IF
+    cmp x26, 200
+    b.HS LA_END_BUS_1_SKIP_IF
     sub x21, x21, 1
     cmp x21, BUS_Y_UPPER_LIMIT
-    b.HS LA_END_BUS_IF
+    b.HS LA_END_BUS_1_SKIP_IF
     mov x21, BUS_Y_UPPER_LIMIT
+LA_END_BUS_1_SKIP_IF:
 
-LA_END_BUS_IF:
+    // IF Frame Number > 300 && < 400
+    cmp x26, 300
+    b.LS LA_END_BUS_2_SKIP_IF
+    cmp x26, 400
+    b.HS LA_END_BUS_2_SKIP_IF
+    add x21, x21, 1
+    cmp x21, BUS_Y_DOWN_LIMIT
+    b.LO LA_END_BUS_2_SKIP_IF
+    mov x21, BUS_Y_DOWN_LIMIT
+LA_END_BUS_2_SKIP_IF:
+
+// IF Frame Number > 545 && < 650
+    cmp x26, 545
+    b.LS LA_END_BUS_3_SKIP_IF
+    cmp x26, 650
+    b.HS LA_END_BUS_3_SKIP_IF
+    sub x21, x21, 1
+    cmp x21, BUS_Y_UPPER_LIMIT
+    b.HS LA_END_BUS_3_SKIP_IF
+    mov x21, BUS_Y_UPPER_LIMIT
+LA_END_BUS_3_SKIP_IF:
+
+    // IF Frame Number > 670 && < 770
+    cmp x26, 670
+    b.LS LA_END_BUS_4_SKIP_IF
+    cmp x26, 770
+    b.HS LA_END_BUS_4_SKIP_IF
+    add x21, x21, 1
+    cmp x21, BUS_Y_DOWN_LIMIT
+    b.LO LA_END_BUS_4_SKIP_IF
+    mov x21, BUS_Y_DOWN_LIMIT
+LA_END_BUS_4_SKIP_IF:
+
+
+
     mov x0, 70
     mov x1, x21
     ldr x2, =SUB_F_BUFFER
@@ -335,6 +488,110 @@ DibujarColectivo:
     add x18, x18, 12                
     b Stack_Pop_Callee              
 
+    br lr
+
+// x0 Posicion X, x1 Posicion Y, x2 Color
+DibujarAuto:
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Push_Callee
+
+    mov x19, x0
+    mov x20, x1
+    mov x21, x2
+
+    mov x0, x19
+    lsl x0, x0, 32
+    add x0, x0, x20
+    
+    movz x1, 90, lsl 32
+    movk x1, 22
+    
+    mov x2, x21
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarRectangulo
+
+    mov x0, x19
+    add x0, x0, 20
+    lsl x0, x0, 32
+    add x0, x0, x20
+    sub x0, x0, 17
+
+    movz x1, 50, lsl 32
+    movk x1, 17
+
+    mov x2, x21
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarRectangulo
+
+    mov x0, x19
+    add x0, x0, 25
+    lsl x0, x0, 32
+    add x0, x0, x20
+    sub x0, x0, 13
+
+    movz x1, 17, lsl 32
+    movk x1, 12
+
+    movz x2, 0x00FF, lsl 16
+    movk x2, 0xFFFF
+
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarRectangulo
+
+    mov x0, x19
+    add x0, x0, 48
+    lsl x0, x0, 32
+    add x0, x0, x20
+    sub x0, x0, 13
+
+    movz x1, 17, lsl 32
+    movk x1, 12
+
+    movz x2, 0x00FF, lsl 16
+    movk x2, 0xFFFF
+
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarRectangulo
+
+    mov x0, x19
+    add x0, x0, 20
+    lsl x0, x0, 32
+    add x0, x0, x20
+    add x0, x0, 21
+
+    movz x1, 10 // r = 10
+
+    mov x2, xzr
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    mov x0, x19
+    add x0, x0, 70
+    lsl x0, x0, 32
+    add x0, x0, x20
+    add x0, x0, 21
+
+    movz x1, 10 // r = 10
+
+    mov x2, xzr
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+
+
+
+
+
+    adr x18, . 
+    add x18, x18, 12
+    b Stack_Pop_Callee
+    
     br lr
 
 // x0 = Direccion Frame Buffer, x1 Color, x2 Frame Number
