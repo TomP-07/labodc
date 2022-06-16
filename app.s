@@ -7,7 +7,7 @@
 .equ BUS_Y_UPPER_LIMIT, 390
 .equ BUS_Y_DOWN_LIMIT, 456
 
-.equ SPEED_MULTIPLIER, 1
+.equ SPEED_MULTIPLIER, 12
 
 
 .globl main
@@ -290,8 +290,26 @@ LA_END_BUS_4_SKIP_IF:
     add x18, x18, 12
     b Stack_Pop_Caller
 
+    cmp x26, 1000
+    b.LO LA_KILL_SKIP
 
+    mov x0, xzr
+    movz x1, SCREEN_WIDTH, lsl 32
+    sub x9, x26, 1000
+    mov x8, 5
+    mul x8, x8, x9
+    add x1, x1, x8
 
+    mov x2, xzr
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarRectangulo
+
+    cmp x26, 1200
+    b.LO LA_KILL_SKIP
+    mov x26, 1
+
+LA_KILL_SKIP:
 
     mov x8, x27
     bl Flush_Sub_F_Buffer
@@ -487,6 +505,123 @@ DibujarColectivo:
     bl DibujarRectangulo
 
 
+
+    lsl x22, x20, 32
+    add x22, x22, x21 // x22 X|Y
+    
+    // Draws the o of odc
+
+    mov x0, 40
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 21 // x0 = X | Y
+    
+    mov x1, 9 // Radio = 9
+
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x0000
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    mov x0, 40
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 21 // x0 = X | Y
+    
+    mov x1, 4 // Radio = 9
+
+    movz x2, 0x00F7, lsl 16
+    movk x2, 0xFF00, lsl 00
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    // Draws the d of odc
+
+    mov x0, 60
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 20 // x0 = X | Y
+    
+    mov x1, 9 // Radio = 9
+
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x0000
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    mov x0, 60
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 20 // x0 = X | Y
+    
+    mov x1, 4 // Radio = 4
+
+    movz x2, 0x00F7, lsl 16
+    movk x2, 0xFF00, lsl 00
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    mov x0, 64
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 42 // x0 = X | Y
+    
+    movz x1, 5, lsl 32
+    movk x1, 27, lsl 00
+
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x0000, lsl 00
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarRectangulo
+
+
+    // Draws the c of odc
+
+    mov x0, 80
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 22 // x0 = X | Y
+    
+    mov x1, 9 // Radio = 9
+
+    movz x2, 0x0000, lsl 16
+    movk x2, 0x0000
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+    mov x0, 85
+    lsl x0, x0, 32
+    add x0, x22, x0
+    sub x0, x0, 22 // x0 = X | Y
+    
+    mov x1, 6 // Radio = 4
+
+    movz x2, 0x00F7, lsl 16
+    movk x2, 0xFF00, lsl 00
+    
+    ldr x3, =SUB_F_BUFFER
+
+    bl DibujarCirculo
+
+
+
+    // x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
+
+
+
+// x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
 
     adr x18, .                      
     add x18, x18, 12                
@@ -934,20 +1069,20 @@ CM_1:
 // x0=(X|Y), x1=(Width|Height), x2=Function(x0 = (X(I) | Y(I)), x1 = x3, x2 = x4, x3 = x5, x4 = x6, x5 = x7).  PRE: {0 <= X < SCREEN_WIDTH, 0 <= Y < SCREEN_HEIGH, Width > 0, Height > 0}
 RectangleMapIterator:
     lsr x10, x0, 32 // x10 = X
-    cmp x10, SCREEN_WIDTH
+    cmp w10, SCREEN_WIDTH
     b.GT SMI_Return // If X is greater than Screen Width, return
     mov x9, xzr
     add w9, w9, w0 // x9 = Y
-    cmp x9, SCREEN_HEIGH 
+    cmp w9, SCREEN_HEIGH 
     b.GT SMI_Return // If Y is greater than Screen Height, return
     lsr x8, x1, 32 
-    add x11, x10, x8
-    cmp x11, xzr
+    add w11, w10, w8
+    cmp w11, 0
     b.LT SMI_Return // If X + Width < 0, return
     mov x8, xzr
     add w8, w8, w1
-    add x11, x8, x9
-    cmp x11, xzr
+    add w11, w8, w9
+    cmp w11, 0
     b.LT SMI_Return // If Y + Height < 0, return
     
     // Store the Callee Saved Registers.
@@ -985,13 +1120,13 @@ SMI_X_Loop: // Loop over the X axis.
     lsr x0, x20, 32 // x0 = X
     mov x1, xzr
     mov w1, w20 // x1 = Y
-    cmp x0, xzr
+    cmp w0, 0
     b.LT SMI_After_Function // If X < 0, Ignore function call
-    cmp x1, xzr
+    cmp w1, 0
     b.LT SMI_After_Function // If Y < 0, Ignore function call
-    cmp x0, SCREEN_WIDTH 
+    cmp w0, SCREEN_WIDTH 
     b.GE SMI_After_Function // If X >= SCREEN_WIDTH, Ignore function call
-    cmp x1, SCREEN_HEIGH
+    cmp w1, SCREEN_HEIGH
     b.GE SMI_After_Function // If Y >= SCREEN_HEIGHT, Ignore function call
 
 
@@ -1010,7 +1145,7 @@ SMI_After_Function:
 
     lsr x9, x20, 32 // Temporal X Counter
     lsr x10, x21, 32 // Temporal X Counter Limit
-    cmp x9, x10 // Compare X Counter against X Counter Limit.
+    cmp w9, w10 // Compare X Counter against X Counter Limit.
     b.GE SMI_Y_Loop
     b SMI_X_Loop // Continue of next column (X).
 SMI_Y_Loop: // Loop over the Y Axis
