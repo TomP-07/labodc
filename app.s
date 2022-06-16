@@ -7,96 +7,51 @@
 .equ BUS_Y_UPPER_LIMIT, 390
 .equ BUS_Y_DOWN_LIMIT, 456
 
-.equ SPEED_MULTIPLIER, 12
+.equ SPEED_MULTIPLIER, 2
 
 
 .globl main
 main:
 
-
-/*	movz x10, 0xC7, lsl 16
-	movk x10, 0x1585, lsl 00
-
-	mov x2, SCREEN_HEIGH         // Y Size 
-loop1:
-	mov x1, SCREEN_WIDTH         // X Size
-loop0:
-	stur w10,[x0]	   // Set color of pixel N
-	add x0,x0,4	   // Next pixel
-	sub x1,x1,1	   // decrement X counter
-	cbnz x1,loop0	   // If not end row jump
-	sub x2,x2,1	   // Decrement Y counter
-	cbnz x2,loop1	   // if not last row, jump
-
-*/
-
-// X0 contiene la direccion base del framebuffer
 mov x27, x0	// Save framebuffer base address to x27	
-bl Reset_Sub_F_Buffer
-    
-/*
-ldr x0, =SUB_F_BUFFER
-movz x1, 0x99db, lsl 00
-mov x1, 80
-ldr x2, =SUB_F_BUFFER
-bl DibujarSol
 
-ldr x0, =SUB_F_BUFFER
-bl DibujarCarretera
+bl Reset_Sub_F_Buffer // Reset Sub Frame Buffer to all 0
 
-mov x8, x27
-bl Flush_Sub_F_Buffer
-*/
-
-
-/*movz x0, 100, lsl 32
-movk x0, 100
-
-movz x1, 100, lsl 32
-movk x1, 200
-
-movz x2, 0x00FF, lsl 32
-movk x2, 0xFFFF 
-
-mov x3, x20
-
-bl DibujarEdificio*/
-
-
-
-
-movz x19, 0x0000, lsl 00
-//mov x20, LOOP_BURN_MULTIPLIER
-mov x20, 1
-mul x19, x19, x20
-mov x20, xzr
-
-
-// X1 Bus Start Y Position
-movz x21, SCREEN_HEIGH - 24, lsl 00 // Bus Y Position
-
+movz x21, SCREEN_HEIGH - 24, lsl 00 // x21 =  Bus Y Position
 mov x26, 1 // x26 = Frame Counter
 
-
-loopAnimacion:
+// Animation Main Loop
+LoopAnimacion:
     
 
+    // Push x0 - x15 to Stack
     adr x18, .
     add x18, x18, 12
     b Stack_Push_Caller
 
 
-    ldr x0, =SUB_F_BUFFER // Framebuffer
-    movz x1, 0x99db, lsl 00 // Color
-    movk x1, 0x0070, lsl 16 // Color
-    mov x2, x26 // Pass Frame Number
+/*
+    Prepare DibujarFondoPantalla Args
+*/
+
+    ldr x0, =SUB_F_BUFFER // x0 = Framebuffer
+    movz x1, 0x99db, lsl 00
+    movk x1, 0x0070, lsl 16 // x1 = Color
+    mov x2, x26 // x2 = Frame Counter
 
     bl DibujarFondoPantalla
 
+/*
+    Prepare DibujarCarretera Args
+*/
+
     ldr x0, =SUB_F_BUFFER
+
     bl DibujarCarretera
 
-
+/*
+    Draw Car Animations:
+*/
     movz x0, 800
     movz x1, SCREEN_HEIGH - 37
     movz x2, 0x00FF, lsl 16
@@ -117,7 +72,7 @@ LA_END_CAR_1_SKIP_IF:
     movz x2, 0x00FF, lsl 16
     movk x2, 0x0000
     
-    // IF Frame Number > 120 && < 400 
+    // IF Frame Number >= 120 && <= 400 
     cmp x26, 120
     b.LO LA_END_CAR_2_SKIP_IF
     cmp x26, 400
@@ -134,11 +89,11 @@ LA_END_CAR_2_SKIP_IF:
     movz x2, 0x0000, lsl 16
     movk x2, 0xFF00
     
-    // IF Frame Number > 300 && < 600 
+    // IF Frame Number >= 300 && <= 600 
     cmp x26, 300
-    b.LS LA_END_CAR_3_SKIP_IF
+    b.LO LA_END_CAR_3_SKIP_IF
     cmp x26, 600
-    b.HS LA_END_CAR_3_SKIP_IF
+    b.HI LA_END_CAR_3_SKIP_IF
 
     sub x3, x26, 300
     mov x4, 7
@@ -149,14 +104,14 @@ LA_END_CAR_3_SKIP_IF:
     
     movz x0, 800
     movz x1, SCREEN_HEIGH - 107
-    movz x2, 0x0000, lsl 16
-    movk x2, 0xFF00
+    movz x2, 0x00A1, lsl 16
+    movk x2, 0x3422
     
-    // IF Frame Number > 350 && < 650 
+    // IF Frame Number >= 350 && <= 650 
     cmp x26, 350
-    b.LS LA_END_CAR_4_SKIP_IF
+    b.LO LA_END_CAR_4_SKIP_IF
     cmp x26, 650
-    b.HS LA_END_CAR_4_SKIP_IF
+    b.HI LA_END_CAR_4_SKIP_IF
 
     sub x3, x26, 350
     mov x4, 5
@@ -185,8 +140,8 @@ LA_END_CAR_5_SKIP_IF:
 
         movz x0, 800
     movz x1, SCREEN_HEIGH - 37
-    movz x2, 0x0000, lsl 16
-    movk x2, 0x00FF
+    movz x2, 0x00B0, lsl 16
+    movk x2, 0x00AA
     
     // IF Frame Number > 600 && < 700 
     cmp x26, 600
@@ -206,7 +161,7 @@ LA_END_CAR_6_SKIP_IF:
     movz x2, 0x00AA, lsl 16
     movk x2, 0xAAAA
     
-    // IF Frame Number > 610 && < 900
+    // IF Frame Number > 610 && < 910
     cmp x26, 610
     b.LS LA_END_CAR_7_SKIP_IF
     cmp x26, 910
@@ -219,15 +174,107 @@ LA_END_CAR_6_SKIP_IF:
     bl DibujarAuto
 LA_END_CAR_7_SKIP_IF:
 
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x0066, lsl 16
+    movk x2, 0x6666
+    
+    // IF Frame Number > 830 && < 1000
+    cmp x26, 830
+    b.LS LA_END_CAR_8_SKIP_IF
+    cmp x26, 1000
+    b.HS LA_END_CAR_8_SKIP_IF
+
+    sub x3, x26, 830
+    mov x4, 16
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_8_SKIP_IF:
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x00AA, lsl 16
+    movk x2, 0x22FF
+    
+    // IF Frame Number > 850 && < 1150
+    cmp x26, 850
+    b.LS LA_END_CAR_9_SKIP_IF
+    cmp x26, 1150
+    b.HS LA_END_CAR_9_SKIP_IF
+
+    sub x3, x26, 850
+    mov x4, 4
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_9_SKIP_IF:
+
+    movz x0, 800
+    movz x1, SCREEN_HEIGH - 107
+    movz x2, 0x0022, lsl 16
+    movk x2, 0x2222
+    
+    // IF Frame Number > 950 && < 1250
+    cmp x26, 950
+    b.LS LA_END_CAR_10_SKIP_IF
+    cmp x26, 1250
+    b.HS LA_END_CAR_10_SKIP_IF
+
+    sub x3, x26, 950
+    mov x4, 5
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_10_SKIP_IF:
+
+    movz x0, 2000
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x00FF, lsl 16
+    movk x2, 0x0033
+    
+    // IF Frame Number > 1100 && < 1600
+    cmp x26, 1100
+    b.LS LA_END_CAR_11_SKIP_IF
+    cmp x26, 1600
+    b.HS LA_END_CAR_11_SKIP_IF
+
+    sub x3, x26, 1100
+    mov x4, 9
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_11_SKIP_IF:
+
+    movz x0, 2500
+    movz x1, SCREEN_HEIGH - 37
+    movz x2, 0x0000, lsl 16
+    movk x2, 0xFFF2
+    
+    // IF Frame Number > 1200 && < 1600
+    cmp x26, 1200
+    b.LS LA_END_CAR_12_SKIP_IF
+    cmp x26, 1600
+    b.HS LA_END_CAR_12_SKIP_IF
+
+    sub x3, x26, 1200
+    mov x4, 12
+    mul x3, x4, x3
+    sub x0, x0, x3
+    bl DibujarAuto
+LA_END_CAR_12_SKIP_IF:
+
+    // Pop x0-x15 from Stack
     adr x18, .
     add x18, x18, 12
     b Stack_Pop_Caller
 
-
-
-
-    // Prepare DibujarColectivo Args,
+/*
+    Prepare DibujarColectivo Args
+*/
     
+    // This all calculates Bus X Position:
+
     // IF Frame Number > 80 && < 200
     cmp x26, 80
     b.LS LA_END_BUS_1_SKIP_IF
@@ -250,9 +297,7 @@ LA_END_BUS_1_SKIP_IF:
     mov x21, BUS_Y_DOWN_LIMIT
 LA_END_BUS_2_SKIP_IF:
 
-
-
-// IF Frame Number > 545 && < 650
+    // IF Frame Number > 545 && < 650
     cmp x26, 545
     b.LS LA_END_BUS_3_SKIP_IF
     cmp x26, 650
@@ -274,28 +319,44 @@ LA_END_BUS_3_SKIP_IF:
     mov x21, BUS_Y_DOWN_LIMIT
 LA_END_BUS_4_SKIP_IF:
 
-
+    // IF Frame Number > 670 && < 770
+    cmp x26, 1150
+    b.LS LA_END_BUS_5_SKIP_IF
+    cmp x26, 1300
+    b.HS LA_END_BUS_5_SKIP_IF
+    sub x21, x21, SPEED_MULTIPLIER
+    cmp x21, BUS_Y_UPPER_LIMIT
+    b.HS LA_END_BUS_5_SKIP_IF
+    mov x21, BUS_Y_UPPER_LIMIT
+LA_END_BUS_5_SKIP_IF:
 
     mov x0, 70
     mov x1, x21
     ldr x2, =SUB_F_BUFFER
 
+
+    // Push x0-x15 to Stack
     adr x18, .
     add x18, x18, 12
     b Stack_Push_Caller
 
+    // Draw da bus
     bl DibujarColectivo
 
+    // Pop x0-x15 from Stack
     adr x18, .
     add x18, x18, 12
     b Stack_Pop_Caller
 
-    cmp x26, 1000
+
+    // Check if we are at Animation Reset time
+    cmp x26, 1700
     b.LO LA_KILL_SKIP
 
+    // Start Drawing Screen of Death ?
     mov x0, xzr
     movz x1, SCREEN_WIDTH, lsl 32
-    sub x9, x26, 1000
+    sub x9, x26, 1700
     mov x8, 5
     mul x8, x8, x9
     add x1, x1, x8
@@ -305,27 +366,23 @@ LA_END_BUS_4_SKIP_IF:
 
     bl DibujarRectangulo
 
-    cmp x26, 1200
+    cmp x26, 1950
     b.LO LA_KILL_SKIP
+
+    // Reset Animation    
     mov x26, 1
 
 LA_KILL_SKIP:
 
+    // Flush Sub Frame Buffer, A.K.A, draw changes to Screen
     mov x8, x27
     bl Flush_Sub_F_Buffer
-    
-    mov x20, xzr // Reset burn time counter
-    mov x9, SPEED_MULTIPLIER
-    add x26, x26, x9
-killTime:
-    cmp x20, x19
-    b.HS loopAnimacion
-    add x20, x20, 1
-    b killTime
 
-InfLoop: 
-	b InfLoop
+    // Multiply Frame Counter by the speed.
+    add x26, x26, SPEED_MULTIPLIER
 
+    // Loop the Animation!
+    b LoopAnimacion
 
 /*
     ----------------------------------
@@ -333,59 +390,11 @@ InfLoop:
     ----------------------------------
 */
 
-
-// x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer  
-/*DibujarEdificio:
-
- adr x18, .                      //x18 = direccion de la linea en donde esta escrita
-    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr
-    b Stack_Push_Callee             //salta a la funcion que guarda del x19 al x27 mas el x30
-
-    bl DibujarRectangulo
-
-    // ventanas
-
-    //ventana1
-///////////////////x0///////////////
-    lsl x4, x0, 32
-    lsr x4, x4, 1        //x4 = mitad del ancho del edificio
-    sub x4, x4, 10        //x4 = mitad del ancho del edificio - 10 (X)
-    lsr x4, x4, 32
-
-    lsr w4, w0, 2        //x4 = (X|alto dividido 4)
-    sub w4, w4, 6        //x4 = (X|alto dividido 4 - 6)   x4=(X|Y)
-
-    mov x5, x0           // x5 = (X|Y) del edificio
-    mov x0, x4           // x0 = x4 (X|Y) primera ventana
-///////////////////x1/////////////////////
-    lsl x6, x1, 32
-    lsr x6, x6, 3        //x4 = ancho del edificio dividido 8
-    lsr x6, x6, 32    //x4 = mitad del ancho del edificio - 10 (X|000...000)
-
-    lsr w6, w1, 3        //x4 = (X|alto dividido 8)
-    sub w6, w6, 5        //x4 = (X|alto dividido 8 - 5)
-
-    mov x7, x1          // x7 = (Ancho|Alto) general
-    mov x1, x6          // x1 = x6
-
-////////////////////x2//////////////////////
-
-    movz x2, 0x0000, lsl 00        //x2 = 0x 0000...0000000
-
-
-    bl DibujarRectangulo            //salta a dibujarrectangulo y guarla la direc de la instruccion sig en x30
-
-    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
-    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr
-    b Stack_Pop_Callee              //salta a la funcion que restaura del x19 al x27 mas el x30
-
-    br lr                           //vuelve a la direc gusrdada en x30 de la instruccion siguiente de donde se llamo a la funcion
-
-*/
-
-
+// Draws the Bus!
 // X0 = X, x1=Y, x2 = FrameBuffer
 DibujarColectivo:
+
+    // Push the Callee Saved Registers. (Save LR)
     adr x18, .              
     add x18, x18, 12                
     b Stack_Push_Callee            
@@ -412,14 +421,13 @@ DibujarColectivo:
     
     bl DibujarRectangulo
 
-    
     mov x0, x20
     add x0, x0, 33
     lsl x0, x0, 32
     add x1, x21, 3
     add x0, x0, x1
 
-    movz x1, 10 // r = 10
+    movz x1, 10 
 
     mov x2, xzr
     mov x3, x19
@@ -433,7 +441,7 @@ DibujarColectivo:
     add x1, x21, 3
     add x0, x0, x1
 
-    movz x1, 10 // r = 10
+    movz x1, 10 
 
     mov x2, xzr
     mov x3, x19
@@ -504,19 +512,17 @@ DibujarColectivo:
 
     bl DibujarRectangulo
 
-
-
     lsl x22, x20, 32
-    add x22, x22, x21 // x22 X|Y
+    add x22, x22, x21
     
     // Draws the o of odc
-
+    
     mov x0, 40
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 21 // x0 = X | Y
+    sub x0, x0, 21
     
-    mov x1, 9 // Radio = 9
+    mov x1, 9
 
     movz x2, 0x0000, lsl 16
     movk x2, 0x0000
@@ -528,9 +534,9 @@ DibujarColectivo:
     mov x0, 40
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 21 // x0 = X | Y
+    sub x0, x0, 21
     
-    mov x1, 4 // Radio = 9
+    mov x1, 4
 
     movz x2, 0x00F7, lsl 16
     movk x2, 0xFF00, lsl 00
@@ -544,9 +550,9 @@ DibujarColectivo:
     mov x0, 60
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 20 // x0 = X | Y
+    sub x0, x0, 20
     
-    mov x1, 9 // Radio = 9
+    mov x1, 9
 
     movz x2, 0x0000, lsl 16
     movk x2, 0x0000
@@ -558,9 +564,9 @@ DibujarColectivo:
     mov x0, 60
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 20 // x0 = X | Y
+    sub x0, x0, 20 
     
-    mov x1, 4 // Radio = 4
+    mov x1, 4
 
     movz x2, 0x00F7, lsl 16
     movk x2, 0xFF00, lsl 00
@@ -572,7 +578,7 @@ DibujarColectivo:
     mov x0, 64
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 42 // x0 = X | Y
+    sub x0, x0, 42
     
     movz x1, 5, lsl 32
     movk x1, 27, lsl 00
@@ -584,15 +590,14 @@ DibujarColectivo:
 
     bl DibujarRectangulo
 
-
     // Draws the c of odc
 
     mov x0, 80
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 22 // x0 = X | Y
+    sub x0, x0, 22
     
-    mov x1, 9 // Radio = 9
+    mov x1, 9
 
     movz x2, 0x0000, lsl 16
     movk x2, 0x0000
@@ -604,9 +609,9 @@ DibujarColectivo:
     mov x0, 85
     lsl x0, x0, 32
     add x0, x22, x0
-    sub x0, x0, 22 // x0 = X | Y
+    sub x0, x0, 22 
     
-    mov x1, 6 // Radio = 4
+    mov x1, 6
 
     movz x2, 0x00F7, lsl 16
     movk x2, 0xFF00, lsl 00
@@ -615,22 +620,19 @@ DibujarColectivo:
 
     bl DibujarCirculo
 
-
-
-    // x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
-
-
-
-// x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
-
+    // Pop the Callee Saved Registers. (Restore LR)
     adr x18, .                      
     add x18, x18, 12                
     b Stack_Pop_Callee              
 
+    // Branch to caller
     br lr
 
+// Draws a Car!
 // x0 Posicion X, x1 Posicion Y, x2 Color
 DibujarAuto:
+    
+    // Push the Callee Saved Registers. (Save LR)
     adr x18, . 
     add x18, x18, 12
     b Stack_Push_Callee
@@ -702,7 +704,7 @@ DibujarAuto:
     add x0, x0, x20
     add x0, x0, 21
 
-    movz x1, 10 // r = 10
+    movz x1, 10
 
     mov x2, xzr
     ldr x3, =SUB_F_BUFFER
@@ -715,24 +717,22 @@ DibujarAuto:
     add x0, x0, x20
     add x0, x0, 21
 
-    movz x1, 10 // r = 10
+    movz x1, 10
 
     mov x2, xzr
     ldr x3, =SUB_F_BUFFER
 
     bl DibujarCirculo
-
-
-
-
-
-
+    
+    // Pop the Callee Saved Registers. (Restore LR)
     adr x18, . 
     add x18, x18, 12
     b Stack_Pop_Callee
     
+    // Branch back to caller!
     br lr
 
+// Draws Screen Background (Sun, Clouds and Sky)
 // x0 = Direccion Frame Buffer, x1 Color, x2 Frame Number
 DibujarFondoPantalla:
     mov x3, x0
@@ -754,17 +754,41 @@ DibujarFondoPantalla:
     bl DibujarSol
 
     mov x0, 700
+    sub x0, x0, x19
     mov x1, 150
-
-    // If Frame Number is < 1600
-    cmp x19, 1600
-    b.HI DFP_Cloud_IF_1
-    mov x8, 1
-    mul x9, x8, x19
-    sub x0, x0, x9
-    mov x4, 2
-DFP_Cloud_IF_1:
+    mov x2, 0
     bl DibujarNube
+
+    mov x0, 900
+    sub x0, x0, x19
+    mov x1, 50
+    mov x2, 1
+    bl DibujarNube
+
+    mov x0, 1200
+    sub x0, x0, x19
+    mov x1, 120
+    mov x2, 2
+    bl DibujarNube
+
+    mov x0, 1500
+    sub x0, x0, x19
+    mov x1, 100
+    mov x2, 0
+    bl DibujarNube
+
+    mov x0, 1700
+    sub x0, x0, x19
+    mov x1, 180
+    mov x2, 1
+    bl DibujarNube
+
+    mov x0, 2050
+    sub x0, x0, x19
+    mov x1, 100
+    mov x2, 2
+    bl DibujarNube
+
 
     adr x18, . 
     add x18, x18, 12
@@ -772,7 +796,7 @@ DFP_Cloud_IF_1:
 
     br lr
 
-
+// Draws a Cloud!
 // x0= X Center, x1 = Y Center, x2 = Tipo (0,1,2)
 DibujarNube:    
     adr x18, . 
@@ -788,8 +812,9 @@ DibujarNube:
     movz x22, 0x00FF, lsl 16 // x22 = Color
     movk x22, 0xFFFF
 
-    cmp x4, 0 // Si es Tipo 0
-    b.NE DB_Skip_0
+    // Tipo 0
+    cmp x2, 0
+    b.NE DB_Skip_0 // Si no es Tipo 0 salta a Tipo 1
 
     mov x0, x19
     mov x1, x21
@@ -848,11 +873,11 @@ DibujarNube:
     b Stack_Pop_Callee
 
     br lr
-DB_Skip_0:
-    
-    cmp x4, 0 // Si es Tipo 1
-    b.NE DB_Skip_1
-    // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer
+
+DB_Skip_0: // Tipo 1
+    cmp x2, 1 
+    b.NE DB_Skip_1 // Si no es Tipo 1 salta a Tipo 2
+
     mov x0, x19
     mov x1, x21
     mov x2, x22
@@ -893,41 +918,93 @@ DB_Skip_0:
 
     br lr
     
-DB_Skip_1:
-    // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer
+DB_Skip_1: // Tipo 2
     mov x0, x19
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
-
     bl DibujarCirculo
 
-    movz x4, 70           //P horizontal
-    lsl x4, x4, 32 
+    movz x4, 30 
+    lsl x4, x4, 32
     add x0, x19, x4
-    sub x0, x0, 5           //P Vertical
+    sub x0, x0, 20
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
     bl DibujarCirculo 
 
-    movz x4, 40 
+    movz x4, 55
     lsl x4, x4, 32
     add x0, x19, x4
-    sub x0, x0, 30
+    sub x0, x0, 28
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
-    bl DibujarCirculo 
+    bl DibujarCirculo
 
-    movz x4, 34
+    movz x4, 85
     lsl x4, x4, 32
     add x0, x19, x4
-    add x0, x0, 21
+    sub x0, x0, 18
     mov x1, x21
     mov x2, x22
     ldr x3, =SUB_F_BUFFER
-    bl DibujarCirculo 
+    bl DibujarCirculo
+
+    movz x4, 105
+    lsl x4, x4, 32
+    add x0, x19, x4
+    sub x0, x0, 0
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+    movz x4, 125
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 10
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+    movz x4, 105
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 20
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+    movz x4, 65
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 20
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+    movz x4, 20
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 20
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
+
+     movz x4, 65
+    lsl x4, x4, 32
+    add x0, x19, x4
+    add x0, x0, 35
+    mov x1, x21
+    mov x2, x22
+    ldr x3, =SUB_F_BUFFER
+    bl DibujarCirculo
 
     adr x18, . 
     add x18, x18, 12
@@ -935,6 +1012,7 @@ DB_Skip_1:
 
     br lr
 
+// Draws a Sun! (It has a nice gradient effect at the borders :D)
 // X0 = X, x1 = Y, x2 = FrameBuffer
 DibujarSol:
 
@@ -942,15 +1020,40 @@ DibujarSol:
     add x18, x18, 12                
     b Stack_Push_Callee  
 
+    mov x19, x0 // x19 X Position
+    mov x20, x1 // x20 Y Position
+    mov x21, x2 // x21 Frame Buffer
+
     lsl x0, x0, 32
     add x0, x0, x1
 
     movz x1, 45
 
     mov x3, x2
+    movz x2, 0x00D7, lsl 16
+    movk x2, 0xDE00
 
-    movz x2, 0x00EB, lsl 16
-    movk x2, 0xC334
+    bl DibujarCirculo
+
+    lsl x0, x19, 32
+    add x0, x0, x20
+
+    movz x1, 43
+    
+    movz x2, 0x00E8, lsl 16
+    movk x2, 0xF002
+    mov x3, x21
+
+    bl DibujarCirculo
+
+    lsl x0, x19, 32
+    add x0, x0, x20
+
+    movz x1, 40
+    
+    movz x2, 0x00F7, lsl 16
+    movk x2, 0xFF00
+    mov x3, x21
 
     bl DibujarCirculo
 
@@ -960,26 +1063,27 @@ DibujarSol:
 
     br lr
 
+// Draws the Road, kind of simple
 // x0 = Direccion Frame Buffer
 DibujarCarretera:
-    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
-    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
-    b Stack_Push_Callee             //salta a la funcion que guarda del x19 al x27 mas el x30
+    adr x18, .                      
+    add x18, x18, 12                
+    b Stack_Push_Callee             
 
-    mov x19, x0                     //x19 = Direccion Frame Buffer
+    mov x19, x0                     //x19 = FrameBuffer
     mov x3, x0
-    mov x0, SCREEN_HEIGH            //x0 = altura
-    sub x0, x0, 120                  //x0 = altura - 50
-    mov x20, x0                     //x20 = x0
+    mov x0, SCREEN_HEIGH            
+    sub x0, x0, 120                 
+    mov x20, x0                     
 
-    movz x1, SCREEN_WIDTH, lsl 32   //x1 = ancho | 000...000
-    movk x1, 120                    //x1 = ancho | 000...100
-    mov x21, x1                     //x21 = x1
+    movz x1, SCREEN_WIDTH, lsl 32   
+    movk x1, 120                    
+    mov x21, x1                     
 
-    movz x2, 0x0055, lsl 16         //x2 = 0x 0000...00550000
-    movk x2, 0x5555, lsl 00         //x2 = 0x 0000...00555555
+    movz x2, 0x0055, lsl 16         
+    movk x2, 0x5555, lsl 00         
 
-    bl DibujarRectangulo            //salta a dibujarrectangulo y guarla la direc de la instruccion sig en x30
+    bl DibujarRectangulo            
     
     mov x3, x19
     mov x0, x20
@@ -1001,36 +1105,25 @@ DibujarCarretera:
     movk x2, 0x00FF, lsl 16
     bl DibujarRectangulo
 
-/*
-mov x0, xzr
-    mov x1, BUS_WIDTH
-    lsl x1, x1, 32
-    add x1, x1, BUS_HEIGHT
+    adr x18, .                      
+    add x18, x18, 12                 
+    b Stack_Pop_Callee              
 
-    movz x2, 0x0000, lsl 00
+    br lr                         
     
-    mov x3, x19
-
-    bl DibujarRectangulo  */
-
-    adr x18, .                      //x18 = direccion de la linea en donde esta escrita
-    add x18, x18, 12                //x18 = direccion de la linea tres instrucciones abajo de adr 
-    b Stack_Pop_Callee              //salta a la funcion que restaura del x19 al x27 mas el x30
-
-    br lr                           //vuelve a la direc gusrdada en x30 de la instruccion siguiente de donde se llamo a la funcion
-    
-
+// Draws a Rectangle!
 // x0=(X|Y), x1=(Ancho|Alto), x2 el color, x3 direccion del frame buffer
 DibujarRectangulo:
 
     mov x4, x3 // x4 = Frame buffer
     mov x3, x2 // x3 = Color
-    adr x2, CuadradoMap // Callback function of the iterator.
+    adr x2, TheCrazyPixelPainter // Callback function of the iterator.
     
     adr x18, .
     add x18, x18, 12
     b Stack_Push_Callee
 
+    // This is awesome btw
     bl RectangleMapIterator
     
     adr x18, .
@@ -1039,6 +1132,7 @@ DibujarRectangulo:
 
     br lr
 
+// Draws a Circle!
 // x0=(X|Y), x1=r radio del circulo, x2 color del circulo, x3 direccion del frame buffer. 
 DibujarCirculo: 
     mov x12, x0 // x12 = Center
@@ -1081,14 +1175,7 @@ DibujarCirculo:
     add x18, x18, 12
     b Stack_Push_Callee
 
-    // x0=(270, 190) = (0x10E, 0xBE)
-    // x1=(100, 100)
-    // x2 ..
-    // x3 = (320, 240) = (0x140 | 0xF0)
-    // x4 = 50 = 0x32
-    // x5 = 0x0000...000DDDDDD
-    // Branch to Iterator
-	//mov x0, xzr
+    // This is awesome btw (x2)
     bl RectangleMapIterator
 
     // Restore the Return Address (and others)
@@ -1099,8 +1186,9 @@ DibujarCirculo:
 DC_Exit: // Branch to Caller.
     br lr
 
+// Just a Pixel Painter with a Fancy Name
 // x0=(X|Y), x1 el color, x2 direccion del frame buffer
-CuadradoMap:
+TheCrazyPixelPainter:
     mov x4, xzr
     mov w4, w0 // x4 = Y Position
     lsr x3, x0, 32 // x3 = X Position
@@ -1117,6 +1205,7 @@ CuadradoMap:
 
     br lr
 
+// Paints a pixel based on where it is inside a circle of radius R. Awesome
 // x0=(X|Y), x1=(Center X | Center Y), x2=r, x3 = Color, x4 = FrameBuffer
 CirculoMap:
 
@@ -1154,6 +1243,14 @@ CirculoMap:
 CM_1:
     br lr
 
+/*
+    This function is awesome,
+    For every pixel inside a box starting from X|Y Position, with a width and height set the function
+    stored at x2 will be called and arguments in register x3 to x7 will be passed to that function
+    
+    Isn't it cool ? :D
+    Like, one function, draw almost everything
+*/
 // x0=(X|Y), x1=(Width|Height), x2=Function(x0 = (X(I) | Y(I)), x1 = x3, x2 = x4, x3 = x5, x4 = x6, x5 = x7).  PRE: {0 <= X < SCREEN_WIDTH, 0 <= Y < SCREEN_HEIGH, Width > 0, Height > 0}
 RectangleMapIterator:
     lsr x10, x0, 32 // x10 = X
@@ -1258,22 +1355,19 @@ SMI_End:// End of the Loop
 SMI_Return:
     br lr
 
-
 /*
     ----------------------------------
         END DRAW FUNCTIONS
     ----------------------------------
 */
 
-
-
-
-
 /*  
     ----------------------------------
         START UTILITY FUNCTIONS
     ----------------------------------
 */
+
+// Flush Sub FrameBuffer, basically apply changes to the Screen.
 // x8 = Framebuffer
 Flush_Sub_F_Buffer:
     movz x0, 0xC000, lsl 00
@@ -1289,13 +1383,11 @@ FSFB_LOOP:
     mov x3, x1
     lsl x3, x3, 2
     add x4, x3, x6
-    
-    //ldur w5, [x4] // Load to w5 Sub FrameBuffer Data
+
     ldp w11, w12, [x4]
 
     add x4, x3, x8
-    //stur w5, [x4] // Store w5 Data to FrameBuffer
-    stp w11, w12, [x4]
+    stp w11, w12, [x4] 
     add x1, x1, 1
 
     cmp x1, x0
@@ -1304,6 +1396,7 @@ FSFB_LOOP:
 FSFB_END:
     br lr
 
+// Reset Sub FrameBuffer, basically set everything to ZERO (A.K.A black)
 Reset_Sub_F_Buffer:
     mov x9, xzr
     ldr x9, =SUB_F_BUFFER
@@ -1327,9 +1420,8 @@ RSFB_LOOP:
 RSFB_END:
     br lr
 
-
-
-Stack_Push_Caller: // Push (Save) Registers X0-X15 to the Stack. Allowing a Subroutine / Function to be called.
+// Push (Save) Registers X0-X15 to the Stack. Allowing a Subroutine / Function to be called.
+Stack_Push_Caller: 
 	stp   x0, x1, [sp, #-16]!
 	stp   x2, x3, [sp, #-16]!
 	stp   x4, x5, [sp, #-16]!
@@ -1340,7 +1432,8 @@ Stack_Push_Caller: // Push (Save) Registers X0-X15 to the Stack. Allowing a Subr
 	stp   x14, x15, [sp, #-16]!
 	br x18 // Used as a Specific Register for Stack-Related Calls. Not ideal.
 
-Stack_Pop_Caller: // Pop (Restore) Register X0-X15 from the Stack. Restoring the values before a Subroutine / Function was called.
+// Pop (Restore) Register X0-X15 from the Stack. Restoring the values before a Subroutine / Function was called.
+Stack_Pop_Caller: 
 	ldp   x14, x15, [sp, 0]
 	ldp   x12, x13, [sp, #16]!
 	ldp   x10, x11, [sp, #16]!
@@ -1352,7 +1445,8 @@ Stack_Pop_Caller: // Pop (Restore) Register X0-X15 from the Stack. Restoring the
 	add sp, sp, 16 
 	br x18 // Used as a Specific Register for Stack-Related Calls. Not ideal.
 
-Stack_Push_Callee: // Push (Save) Registers X19-X27 and LR Register to the Stack. Allowing the Subroutine / Function to use those Registers.
+// Push (Save) Registers X19-X27 and LR Register to the Stack. Allowing the Subroutine / Function to use those Registers.
+Stack_Push_Callee: 
 	stp   x19, x20, [sp, #-16]!
 	stp   x21, x22, [sp, #-16]!
 	stp   x23, x24, [sp, #-16]!
@@ -1360,7 +1454,8 @@ Stack_Push_Callee: // Push (Save) Registers X19-X27 and LR Register to the Stack
 	stp   x27, lr, [sp, #-16]!
 	br x18 // Used as a Specific Register for Stack-Related Calls. Not ideal.
 
-Stack_Pop_Callee: // Pop (Restore) Registers X19-X27 and LR Register from the Stack. Allowing the Subroutine / Function to use those Registers.
+// Pop (Restore) Registers X19-X27 and LR Register from the Stack. Allowing the Subroutine / Function to use those Registers.
+Stack_Pop_Callee: 
 	ldp   x27, lr, [sp, 0]
 	ldp   x25, x26, [sp, #16]!
 	ldp   x23, x24, [sp, #16]!
@@ -1375,25 +1470,6 @@ Stack_Pop_Callee: // Pop (Restore) Registers X19-X27 and LR Register from the St
     ----------------------------------
 */
 
-
-    /*
-    // Example of use of square root
-    mov x0, 4
-    ucvtf d0, x0
-    fmov x0, d0
-    mov x1, 50
-
-    // x0=N argumento en punto flotante
-    
-    SquareRoot:
-        fmov d0, x0
-        fsqrt d0, d0
-        fmov x8, d0
-        br lr
-    */
+// Our awesome Sub Frame Buffer!
 .data
 SUB_F_BUFFER: .skip 0x12C000 // 640 * 480 * 4
-
-
-
-
